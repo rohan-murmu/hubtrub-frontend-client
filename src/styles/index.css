@@ -1,0 +1,219 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #ffffff;
+  color: #111827;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Dark mode */
+html.dark,
+html.dark body {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* PrimeReact theme overrides */
+.p-button {
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.p-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.p-button-success {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+.p-button-success:hover {
+  background: #059669 !important;
+  border-color: #059669 !important;
+}
+
+.p-button-danger {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+}
+
+.p-button-danger:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.p-button-info {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.p-button-info:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.p-card {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.p-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode for cards */
+:global(.dark) .p-card {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+/* Input fields */
+.p-inputtext {
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.p-inputtext:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.p-inputtext.p-invalid {
+  border-color: #ef4444;
+}
+
+:global(.dark) .p-inputtext {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+/* Dialogs */
+.p-dialog {
+  border-radius: 8px;
+}
+
+.p-dialog .p-dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.p-dialog .p-dialog-title {
+  font-weight: 600;
+}
+
+:global(.dark) .p-dialog {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+/* Responsive utilities */
+.w-100 {
+  width: 100%;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+:global(.dark) ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+:global(.dark) ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+:global(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Utility classes */
+.p-error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  html,
+  body {
+    font-size: 14px;
+  }
+
+  .p-button {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .p-card {
+    margin-bottom: 1rem;
+  }
+}

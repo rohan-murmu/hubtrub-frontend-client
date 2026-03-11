@@ -1,0 +1,194 @@
+.panel-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #1a1f2e;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  position: relative;
+  gap: 0.75rem;
+}
+
+.panel-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-item-text {
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-item-text.response {
+  flex-direction: column;
+  align-items: flex-start;
+  white-space: normal;
+}
+
+.status-pending {
+  font-size: 0.75rem;
+  color: #f59e0b;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.panel-item-action-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  border: none;
+  border-radius: 0.375rem;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.panel-item-action-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.panel-item-action-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.panel-item-action-btn.pending {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+.panel-item-action-btn.pending:disabled {
+  opacity: 0.7;
+}
+
+.panel-item-action-btn.accept {
+  background: #10b981;
+}
+
+.panel-item-action-btn.accept:hover {
+  background: #059669;
+}
+
+.panel-item-close {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 50%;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.panel-item-close:hover {
+  background: #334155;
+  color: #f1f5f9;
+  border-color: #64748b;
+}
+
+/* Type-specific styles */
+.panel-list-item--chat_request {
+  border-left: 3px solid #3b82f6;
+}
+
+.panel-list-item--chat_received {
+  border-left: 3px solid #f59e0b;
+}
+
+.panel-list-item--chat_response {
+  border-left: 3px solid #10b981;
+}
+
+/* Status-specific styles */
+.panel-list-item.status-pending {
+  background: #1a2332;
+  border-color: #f59e0b;
+}
+
+.panel-list-item.status-accepted {
+  background: #1a3a2a;
+  border-color: #10b981;
+}
+
+.panel-list-item.status-rejected {
+  background: #3a1a1a;
+  border-color: #ef4444;
+}
+
+.response-status {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.response-status.accepted {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.response-status.rejected {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Status Badge Styles */
+.status-badge {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-badge.status-pending {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.status-badge.status-accepted {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.status-rejected {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}

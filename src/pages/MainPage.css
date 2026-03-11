@@ -1,0 +1,92 @@
+.main-header {
+  top: 0;
+  z-index: 100;
+  padding: 1.5rem 0;
+}
+
+.header-container {
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+  padding: 0 1rem;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  align-self: flex-end;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.header-bottom {
+  width: 100%;
+}
+
+.drop-menu-items * {
+  padding: 5px;
+}
+
+.main-content {
+  min-height: calc(100vh - 80px);
+  background: white;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+/* Dark mode */
+:global(.dark) .main-content {
+  background: #0f172a;
+  color: #f3f4f6;
+}
+
+:global(.dark) .header-title {
+  color: white;
+}
+
+/* Dialogs */
+.room-form-dialog {
+  max-width: 600px;
+}
+
+.user-form-dialog {
+  max-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header-left {
+    width: 100%;
+  }
+
+  .header-title {
+    font-size: 1.4rem;
+  }
+
+  .header-right {
+    width: 100%;
+  }
+
+  .room-form-dialog,
+  .user-form-dialog {
+    max-width: calc(100vw - 2rem);
+  }
+}

@@ -1,0 +1,153 @@
+.room-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.room-form-card {
+  width: 100%;
+  max-width: 600px;
+  border: 2px solid #001234;
+  padding: 2em;
+  color: #001234;
+}
+
+.room-form-card h2 {
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+.form-field {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.form-field .p-inputtext {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 2px solid #001234;
+}
+
+.form-field input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Scene Grid Styles */
+.scene-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.scene-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
+  background: white;
+  min-height: 140px;
+}
+
+.scene-option.selected {
+  border: 2px solid #001234;
+}
+
+.scene-option.selected .scene-label {
+  font-weight: 600;
+  color: #001234;
+  font-size: 0.95rem;
+}
+
+.scene-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.scene-preview-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  background-color: #e0e0e0;
+}
+
+/* File Input Styles */
+.file-input {
+  padding: 0.75rem;
+  border: 2px solid #001234;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.uploaded-preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.p-error {
+  color: #ff1234;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 600px) {
+  .room-form-container {
+    padding: 0.5rem;
+  }
+
+  .room-form-card {
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .room-form-card h2 {
+    font-size: 1.4rem;
+  }
+
+  .scene-grid {
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .scene-option {
+    min-height: 120px;
+    padding: 0.75rem;
+  }
+
+  .scene-preview-box {
+    width: 50px;
+    height: 50px;
+  }
+
+  .scene-label {
+    font-size: 0.75rem;
+  }
+}
