@@ -1,0 +1,206 @@
+/* GroupChatView uses display:contents so its children participate
+   directly in the parent .room-page-group CSS Grid layout. */
+.group-chat-view {
+  display: contents;
+}
+
+/* ─── Left: Chat Panel ──────────────────────── */
+.group-chat-left {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+  overflow: hidden;
+  min-height: 0; /* allows flex children to shrink */
+}
+
+.group-chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.group-chat-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.group-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0; /* critical for scrolling inside flex */
+}
+
+.group-chat-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.group-chat-bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  word-break: break-word;
+}
+
+.group-chat-bubble.self {
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.group-chat-bubble.other {
+  align-self: flex-start;
+  background: #f3f4f6;
+  color: #111827;
+  border-bottom-left-radius: 4px;
+}
+
+.group-chat-sender {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.group-chat-content {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* ─── Input Bar ─────────────────────────────── */
+.group-chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.group-chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.group-chat-input:focus {
+  border-color: #2563eb;
+}
+
+.group-chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #111827;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.15s;
+}
+
+.group-chat-send-btn:hover {
+  background: #1f2937;
+}
+
+.group-chat-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Members Panel (right column, top) ─────── */
+.group-chat-members {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  max-height: 250px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.group-members-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.group-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-member-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.group-member-item:last-child {
+  border-bottom: none;
+}
+
+.group-member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.group-member-name {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* ─── Leave Button (right column, bottom) ───── */
+.group-leave-btn {
+  margin: 12px 16px;
+  padding: 10px;
+  background: #fff;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.group-leave-btn:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}

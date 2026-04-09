@@ -1,0 +1,78 @@
+.group-card-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 199;
+  cursor: default;
+}
+
+.group-card {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px 32px;
+  min-width: 240px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+}
+
+
+
+.group-card-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.group-card-avatars {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+
+.group-card-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #374151;
+  margin-left: -8px;
+}
+
+.group-card-avatar:first-child {
+  margin-left: 0;
+}
+
+.group-card-extra {
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.group-card-join-btn {
+  padding: 10px 40px;
+  background: #fff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.group-card-join-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}

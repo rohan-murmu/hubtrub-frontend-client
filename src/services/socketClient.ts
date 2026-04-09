@@ -4,12 +4,23 @@
 export const MESSAGE_TYPES = {
   PLAYER_JOIN: "player:join",
   PLAYER_LEAVE: "player:leave",
+  PLAYER_FOLLOW: "player:follow",
+  PLAYER_UNFOLLOW: "player:unfollow",
+  PLAYER_STOP_ALL_FOLLOWERS: "player:stop_all_followers",
+  PLAYER_FOLLOWER_UPDATE: "player:follower_update",
+  PLAYER_STOP_FOLLOWING: "player:stop_following",
   INTERFACE_PANEL: "interface:panel",
   INTERFACE_VIEWER: "interface:viewer",
   CHAT_PRIVATE: "chat:private",
   CHAT_GROUP: "chat:group",
   CHAT_PUBLIC: "chat:public",
   ERROR: "error",
+  // Group lifecycle
+  GROUP_CREATE: "group:create",
+  GROUP_JOIN: "group:join",
+  GROUP_LEAVE: "group:leave",
+  GROUP_DELETE: "group:delete",
+  GROUP_UPDATE: "group:update",
 } as const;
 
 // Chat subtypes
@@ -63,7 +74,7 @@ export const socketClient = {
 
     return new Promise<void>((resolve, reject) => {
       isConnecting = true;
-      const wsUrl = `ws://127.0.0.1:9000/ws?roomId=${roomId}&clientId=${clientId}&type=interface`;
+      const wsUrl = `ws://127.0.0.1:9000/ws?roomId=${roomId}&clientId=${clientId}&type=ui`;
       console.log(`🔗 Connecting to WebSocket: ${wsUrl}`);
 
       try {
@@ -196,6 +207,21 @@ export const socketClient = {
   },
 
   /**
+   * Listen for follower update events (sent by the server to the followed player)
+   */
+  onFollowerUpdate(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.PLAYER_FOLLOWER_UPDATE, callback);
+  },
+
+  /**
+   * Listen for stop-following events (sent by the server to the follower when the
+   * followed player removes them)
+   */
+  onStopFollowing(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.PLAYER_STOP_FOLLOWING, callback);
+  },
+
+  /**
    * Send a message to the server
    */
   send(message: SocketMessage): void {
@@ -205,6 +231,59 @@ export const socketClient = {
     } else {
       console.warn("⚠️ WebSocket not connected, message not sent");
     }
+  },
+
+  sendFollow(followerId: string, followedId: string): void {
+    this.send({ type: MESSAGE_TYPES.PLAYER_FOLLOW, payload: { followerId, followedId } });
+  },
+
+  sendUnfollow(followerId: string, followedId: string): void {
+    this.send({ type: MESSAGE_TYPES.PLAYER_UNFOLLOW, payload: { followerId, followedId } });
+  },
+
+  sendStopAllFollowers(followedId: string): void {
+    this.send({ type: MESSAGE_TYPES.PLAYER_STOP_ALL_FOLLOWERS, payload: { followedId } });
+  },
+
+  // ─── Group Methods ────────────────────────────────────────────────────
+
+  sendGroupCreate(creatorId: string, groupName: string): void {
+    this.send({ type: MESSAGE_TYPES.GROUP_CREATE, payload: { creatorId, groupName } });
+  },
+
+  sendGroupJoin(clientId: string, groupId: string): void {
+    this.send({ type: MESSAGE_TYPES.GROUP_JOIN, payload: { clientId, groupId } });
+  },
+
+  sendGroupLeave(clientId: string, groupId: string): void {
+    this.send({ type: MESSAGE_TYPES.GROUP_LEAVE, payload: { clientId, groupId } });
+  },
+
+  sendGroupMessage(senderId: string, groupId: string, content: string, senderName?: string): void {
+    this.send({
+      type: MESSAGE_TYPES.CHAT_GROUP,
+      payload: { subType: "message", senderId, senderName: senderName || senderId, groupId, content },
+    });
+  },
+
+  onGroupCreate(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.GROUP_CREATE, callback);
+  },
+
+  onGroupJoin(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.GROUP_JOIN, callback);
+  },
+
+  onGroupLeave(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.GROUP_LEAVE, callback);
+  },
+
+  onGroupDelete(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.GROUP_DELETE, callback);
+  },
+
+  onGroupUpdate(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.GROUP_UPDATE, callback);
   },
 
   /**

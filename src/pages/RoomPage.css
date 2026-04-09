@@ -1,6 +1,6 @@
 .room-page {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100vh;
   width: 100%;
   background-color: #0f0f0f;
@@ -10,66 +10,44 @@
   left: 0;
 }
 
-.room-page-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #333;
-  z-index: 100;
-  position: relative;
-  flex-shrink: 0;
+/* ─── Group Mode: CSS Grid layout ───────────── */
+.room-page-group {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  grid-template-rows: auto 1fr auto;
 }
 
-.room-page-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  gap: 0;
+/* Chat panel fills entire left column */
+.room-page-group .group-chat-left {
+  grid-column: 1;
+  grid-row: 1 / -1;
 }
 
-.room-page-container {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  background-color: #0f0f0f;
+/* Members panel: right column, top row */
+.room-page-group .group-chat-members {
+  grid-column: 2;
+  grid-row: 1;
 }
 
-.back-button {
-  color: #fff !important;
-  font-size: 1.5rem !important;
-  min-width: 44px;
+/* Game container: right column, middle row */
+.room-page-group .room-page-container {
+  grid-column: 2;
+  grid-row: 2;
+  width: auto;
+  height: auto;
 }
 
-.back-button:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.room-title {
-  flex: 1;
-  margin: 0;
-  font-size: 1.5rem;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-}
-
-.room-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #aaa;
-  font-size: 0.9rem;
+/* Leave button: right column, bottom row */
+.room-page-group .group-leave-btn {
+  grid-column: 2;
+  grid-row: 3;
 }
 
 /* Main container for Godot game - Fullscreen and responsive */
 .room-page-container {
   flex: 1;
   width: 100%;
-  height: calc(100vh - 60px);
+  height: 100vh;
   position: relative;
   overflow: hidden;
   background-color: #000;

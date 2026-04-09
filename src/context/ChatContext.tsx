@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { socketClient, MESSAGE_TYPES, CHAT_SUBTYPES } from "../services/socketClient";
+import { userService } from "../services/api";
 
 // Message in a chat
 export interface ChatMessage {
@@ -29,6 +30,12 @@ interface ChatContextType {
   leavePrivateChat: (chatId: string) => void;
   getPrivateChatByParticipant: (participantId: string) => PrivateChat | undefined;
   removePrivateChat: (chatId: string) => void;
+  // Floating chat windows
+  openChatWindowIds: string[];
+  openChatWindow: (chatId: string) => void;
+  closeChatWindow: (chatId: string) => void;
+  // Online user tracking
+  onlineUserIds: string[];
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -53,6 +60,23 @@ function getCurrentClient(): { clientId: string; clientUserName: string } | null
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [privateChats, setPrivateChats] = useState<PrivateChat[]>([]);
   const [activePrivateChatId, setActivePrivateChatId] = useState<string | null>(null);
+  const [openChatWindowIds, setOpenChatWindowIds] = useState<string[]>([]);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+
+  const MAX_OPEN_WINDOWS = 3;
+
+  const openChatWindow = useCallback((chatId: string) => {
+    setOpenChatWindowIds((prev) => {
+      if (prev.includes(chatId)) return prev;
+      const next = [...prev, chatId];
+      // Drop oldest window if over the limit
+      return next.length > MAX_OPEN_WINDOWS ? next.slice(next.length - MAX_OPEN_WINDOWS) : next;
+    });
+  }, []);
+
+  const closeChatWindow = useCallback((chatId: string) => {
+    setOpenChatWindowIds((prev) => prev.filter((id) => id !== chatId));
+  }, []);
 
   // Create a new private chat
   const createPrivateChat = useCallback((participantId: string, participantName: string): string => {
@@ -174,49 +198,114 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Listen for incoming private chat messages
   useEffect(() => {
     const unsubscribe = socketClient.onChatPrivate((message) => {
-         const payload = JSON.parse(JSON.stringify(message));
+      const payload = JSON.parse(JSON.stringify(message));
       if (!payload) return;
 
       const currentClient = getCurrentClient();
       if (!currentClient) return;
 
-      const subType = payload.subType;
-      const senderId = payload.senderId;
-      const senderName = payload.senderName || senderId;
-      const targetId = payload.receiverId ?? payload.recieverId;
+      // The server sends fields at top level (senderId, receiverId, content)
+      // React sends them inside payload.subType. Handle both.
+      const subType = payload.subType ?? payload.payload?.subType;
+      const senderId: string = payload.senderId ?? payload.payload?.senderId;
+      const senderName: string = payload.senderName ?? payload.payload?.senderName ?? senderId;
+      const targetId: string = payload.receiverId ?? payload.payload?.receiverId ?? payload.recieverId;
+      const content: string = payload.content ?? payload.payload?.content ?? "";
 
       // Only process messages meant for us
       if (targetId !== currentClient.clientId) return;
 
-      switch (subType) {
-        case CHAT_SUBTYPES.MESSAGE:
-          // Find the chat with this sender
-          const chat = privateChats.find((c) => c.participantId === senderId);
-          if (chat) {
-            addMessageToChat(chat.id, {
-              senderId,
-              senderName,
-              content: payload.content || "",
-            });
-            console.log("📩 Received private message from:", senderName);
-          } else {
-            console.warn("⚠️ Received message but no chat found for sender:", senderId);
-          }
-          break;
+      // Treat undefined subType (incoming from server) as a regular message
+      const isRegularMessage = !subType || subType === CHAT_SUBTYPES.MESSAGE;
 
-        case CHAT_SUBTYPES.LEAVE:
-          // Other user left the chat - find and remove it
-          const chatToRemove = privateChats.find((c) => c.participantId === senderId);
-          if (chatToRemove) {
-            removePrivateChat(chatToRemove.id);
-            console.log("👋 User left private chat:", senderName);
+      if (isRegularMessage) {
+        const existingChat = privateChats.find((c) => c.participantId === senderId);
+        if (existingChat) {
+          addMessageToChat(existingChat.id, { senderId, senderName, content });
+          // If the stored name is still the raw ID, update it with the incoming senderName
+          if (senderName && senderName !== senderId && existingChat.participantName === existingChat.participantId) {
+            setPrivateChats((prev) =>
+              prev.map((c) =>
+                c.id === existingChat.id ? { ...c, participantName: senderName } : c
+              )
+            );
           }
-          break;
+          // Auto-open window if not already open, respecting the 3-window cap
+          setOpenChatWindowIds((prev) => {
+            if (prev.includes(existingChat.id)) return prev;
+            const next = [...prev, existingChat.id];
+            return next.length > MAX_OPEN_WINDOWS ? next.slice(next.length - MAX_OPEN_WINDOWS) : next;
+          });
+          console.log("📩 Received private message from:", senderName);
+        } else {
+          // Auto-create chat for incoming message
+          const chatId = `private-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const newChat: PrivateChat = {
+            id: chatId,
+            participantId: senderId,
+            participantName: senderName,
+            messages: [],
+            createdAt: Date.now(),
+          };
+          setPrivateChats((prev) => [...prev, newChat]);
+          // If the server didn't send a real name (fallback = senderId), fetch it
+          if (!senderName || senderName === senderId) {
+            userService.getClientById(senderId).then((clientData) => {
+              const actualName = clientData.clientUserName || senderId;
+              setPrivateChats((prev) =>
+                prev.map((c) =>
+                  c.id === chatId ? { ...c, participantName: actualName } : c
+                )
+              );
+            }).catch(() => { /* keep ID as fallback */ });
+          }
+          // Add message and open window after chat is created
+          setTimeout(() => {
+            addMessageToChat(chatId, { senderId, senderName, content });
+            setOpenChatWindowIds((prev) => {
+              if (prev.includes(chatId)) return prev;
+              const next = [...prev, chatId];
+              return next.length > MAX_OPEN_WINDOWS ? next.slice(next.length - MAX_OPEN_WINDOWS) : next;
+            });
+          }, 0);
+          console.log("📩 Auto-created chat and received message from:", senderName);
+        }
+        return;
+      }
+
+      if (subType === CHAT_SUBTYPES.LEAVE) {
+        const chatToRemove = privateChats.find((c) => c.participantId === senderId);
+        if (chatToRemove) {
+          removePrivateChat(chatToRemove.id);
+          console.log("👋 User left private chat:", senderName);
+        }
       }
     });
 
     return unsubscribe;
   }, [privateChats, addMessageToChat, removePrivateChat]);
+
+  // Track online users via player join/leave
+  useEffect(() => {
+    const unsubJoin = socketClient.onPlayerJoin((message) => {
+      const pid = message.payload?.pid as string | undefined;
+      if (pid) {
+        setOnlineUserIds((prev) => (prev.includes(pid) ? prev : [...prev, pid]));
+      }
+    });
+
+    const unsubLeave = socketClient.onPlayerLeave((message) => {
+      const pid = message.payload?.pid as string | undefined;
+      if (pid) {
+        setOnlineUserIds((prev) => prev.filter((id) => id !== pid));
+      }
+    });
+
+    return () => {
+      unsubJoin();
+      unsubLeave();
+    };
+  }, []);
 
   return (
     <ChatContext.Provider
@@ -230,6 +319,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         leavePrivateChat,
         getPrivateChatByParticipant,
         removePrivateChat,
+        openChatWindowIds,
+        openChatWindow,
+        closeChatWindow,
+        onlineUserIds,
       }}
     >
       {children}

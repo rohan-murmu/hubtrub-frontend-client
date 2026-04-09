@@ -21,3 +21,21 @@ export interface ErrorResponse {
   message: string;
   errors?: Record<string, string>;
 }
+
+// Group chat types
+export interface GroupInfo {
+  groupId: string;
+  groupName: string;
+  members: string[];
+  creatorId?: string;
+  x: number;
+  y: number;
+}
+
+export interface GroupMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: number;
+}
