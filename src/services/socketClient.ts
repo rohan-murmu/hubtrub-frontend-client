@@ -55,6 +55,9 @@ const emitMessage = (type: string, message: SocketMessage) => {
   }
 };
 
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+
+
 export const socketClient = {
   /**
    * Connect to WebSocket server
@@ -74,7 +77,7 @@ export const socketClient = {
 
     return new Promise<void>((resolve, reject) => {
       isConnecting = true;
-      const wsUrl = `ws://127.0.0.1:9000/ws?roomId=${roomId}&clientId=${clientId}&type=ui`;
+      const wsUrl = `${WS_URL}/ws?roomId=${roomId}&clientId=${clientId}&type=ui`;
       console.log(`🔗 Connecting to WebSocket: ${wsUrl}`);
 
       try {

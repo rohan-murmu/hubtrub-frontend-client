@@ -16,6 +16,8 @@ import GroupChatView from "../components/GroupChatView/GroupChatView";
 import GroupCard from "../components/GroupCard/GroupCard";
 import "./RoomPage.css";
 
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+
 /** Renders floating private chat windows inside ChatProvider */
 function ChatWindowsLayer() {
   const { openChatWindowIds, privateChats } = useChat();
@@ -121,71 +123,6 @@ export default function RoomPage() {
     initializeRoom();
   }, [roomId]);
 
-  // // Initialize iframe and communicate with Godot
-  // useEffect(() => {
-  //   if (
-  //     loading ||
-  //     !room ||
-  //     !client ||
-  //     !iframeRef.current ||
-  //     gameInitializedRef.current
-  //   ) {
-  //     return;
-  //   }
-
-  //   const initializeGame = async () => {
-  //     try {
-  //       console.log("📥 Starting Game initialization with iframe...");
-
-  //       // Wait for iframe to load
-  //       await new Promise<void>((resolve) => {
-  //         if (iframeRef.current?.contentWindow) {
-  //           resolve();
-  //         } else {
-  //           iframeRef.current!.onload = () => resolve();
-  //         }
-  //       });
-
-  //       gameInitializedRef.current = true;
-
-  //       // Prepare config
-  //       const worldKey = room.roomScene || "";
-  //       const playerKey = client.clientAvatar || "";
-  //       const clientId = client.clientId || "";
-  //       const rid = roomId || "";
-
-  //       const config = {
-  //         roomId: rid,
-  //         clientId,
-  //         worldKey,
-  //         playerKey,
-  //       };
-
-  //       console.log("🔗 Sending connection config to game iframe:", config);
-
-  //       // Send configuration to iframe via postMessage
-  //       if (iframeRef.current) {
-  //         sendMessageToIframe(iframeRef.current, "SET_CONNECTION_CONFIG", config);
-  //       }
-
-  //       console.log("✓ Game initialization completed");
-  //       console.log("ℹ️  Game should be running now in the iframe");
-  //     } catch (err) {
-  //       console.error("❌ Game initialization failed:", err);
-  //       const errorMsg = err instanceof Error ? err.message : String(err);
-  //       setError(`Failed to initialize game: ${errorMsg}`);
-  //       gameInitializedRef.current = false;
-  //     }
-  //   };
-
-  //   initializeGame();
-
-  //   // Cleanup on unmount
-  //   return () => {
-  //     cleanupGodotSession();
-  //   };
-  // }, [loading, room, client, roomId]);
-
   useEffect(() => {
   const cleanup = listenToIframeMessages((message) => {
     console.log("📥 RoomPage received message from iframe:", message);
@@ -198,6 +135,7 @@ export default function RoomPage() {
           iframeRef.current,
           "SET_CONNECTION_CONFIG",
           {
+            wsUrl: WS_URL,
             roomId: roomId,
             clientId: client?.clientId,
             worldKey: room?.roomScene,

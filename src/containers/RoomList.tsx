@@ -18,7 +18,7 @@ export default function RoomList({
   const client = localStorage.getItem("client");
   const clientUserName = client ? JSON.parse(client).clientUserName : null;
 
-  if (rooms.length === 0) {
+  if (rooms && rooms.length === 0) {
     return (
       <div className="room-list-container">
         <div className="room-list-header">
@@ -37,7 +37,7 @@ export default function RoomList({
         <h2>All Hubs</h2>
       </div>
       <div className="room-list-grid">
-        {rooms.map((room) => (
+        {rooms && rooms.map((room) => (
           <RoomCard
             key={room.roomId}
             room={room}
