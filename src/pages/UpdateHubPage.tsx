@@ -1,70 +1,109 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import type { Room } from "../types";
-import RoomFormTemplate from "../templates/RoomFormTemplate";
-import { roomService } from "../services/api";
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import type { Room } from '@/types';
+import { roomService } from '@/services/api';
+import { findScene } from '@/utils/scenes';
+import AppShell from '@/components/ui/AppShell';
+import Panel from '@/components/ui/Panel';
+import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
+import HubDetailsForm, { type HubDetails } from '@/components/hub/HubDetailsForm';
+import { errorMessage } from '@/utils/errorMessage';
+import './CreateHubPage.css';
 
 export default function UpdateHubPage() {
   const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
   const [loading, setLoading] = useState(false);
-  const [room, setRoom] = useState<Room | null>(null);
   const [fetching, setFetching] = useState(true);
+  const [sceneKey, setSceneKey] = useState('');
+  const [details, setDetails] = useState<HubDetails>({
+    name: '',
+    description: '',
+    visibility: 'PUBLIC',
+  });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (roomId) {
-      fetchRoom();
-    }
-  }, [roomId]);
-
-  const fetchRoom = async () => {
-    try {
-      setFetching(true);
-      if (roomId) {
-        const data = await roomService.getRoomById(roomId);
-        setRoom(data);
+    if (!roomId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data: Room = await roomService.getRoomById(roomId);
+        if (cancelled) return;
+        setSceneKey(data.sceneKey);
+        setDetails({
+          name: data.name,
+          description: data.description,
+          visibility: data.visibility ?? 'PUBLIC',
+        });
+      } catch {
+        navigate('/hub');
+      } finally {
+        if (!cancelled) setFetching(false);
       }
-    } catch (error: unknown) {
-      navigate("/hub");
-    } finally {
-      setFetching(false);
-    }
-  };
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [roomId, navigate]);
 
-  const handleSubmit = async (data: Room) => {
+  const handleUpdate = async () => {
+    if (!roomId) return;
+    setError(null);
+    setLoading(true);
     try {
-      setLoading(true);
-      if (roomId) {
-        await roomService.updateRoom(roomId, data);
-
-        // Redirect after 2 seconds
-        setTimeout(() => {
-          navigate("/hub");
-        }, 2000);
-      }
-    } catch (error: unknown) {
-      throw error;
+      // Scene is immutable on update — only hub details change.
+      await roomService.updateRoom(roomId, {
+        name: details.name.trim(),
+        description: details.description,
+        visibility: details.visibility,
+      });
+      navigate('/hub');
+    } catch (e) {
+      setError(errorMessage(e, 'Failed to update hub'));
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetching) {
-    return (
-      <div style={{ textAlign: "center", padding: "2rem" }}>Loading...</div>
-    );
-  }
+  const scene = findScene(sceneKey);
 
   return (
-    <>
-      {room && (
-        <RoomFormTemplate
-          title="Update Hub"
-          onSubmit={handleSubmit}
-          loading={loading}
-          initialData={room}
-        />
-      )}
-    </>
+    <AppShell>
+      <div className="hub-page-wrap">
+        <Panel className="hub-page-card">
+          <div className="hub-page-head">
+            <h1 className="hub-page-title">Update Hub</h1>
+          </div>
+
+          {error && <Alert tone="error">{error}</Alert>}
+
+          {fetching ? (
+            <div className="hub-state">Loading…</div>
+          ) : (
+            <>
+              <HubDetailsForm value={details} onChange={setDetails} disabled={loading} />
+
+              <div>
+                <label className="hub-form__field-label">World scene (cannot be changed)</label>
+                <div className="hub-readonly-scene">
+                  {scene ? scene.label : sceneKey || '—'}
+                </div>
+              </div>
+
+              <div className="hub-page-foot">
+                <Button variant="subtle" onClick={() => navigate('/hub')} disabled={loading}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdate} loading={loading} disabled={loading || !details.name.trim()}>
+                  Update Hub
+                </Button>
+              </div>
+            </>
+          )}
+        </Panel>
+      </div>
+    </AppShell>
   );
 }

@@ -4,7 +4,34 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <title>client</title>
+    <script>
+      // Set the theme before first paint to avoid a flash of the wrong palette.
+      // Default = dark when the user hasn't picked one yet; 'system' is only
+      // honoured if they explicitly chose it in Settings.
+      (function () {
+        try {
+          var saved = localStorage.getItem('theme');
+          var resolved =
+            saved === 'light' || saved === 'dark'
+              ? saved
+              : saved === 'system'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches
+                    ? 'dark'
+                    : 'light')
+                : 'dark';
+          document.documentElement.setAttribute('data-theme', resolved);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

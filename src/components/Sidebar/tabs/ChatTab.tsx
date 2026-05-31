@@ -1,36 +1,34 @@
-import { useChat } from "../../../context/ChatContext";
+import { useChat } from "@/context/ChatContext";
+import { useCurrentUser } from "@/context/UserContext";
+import Avatar from "@/components/common/Avatar";
 import "./ChatTab.css";
 
-interface ChatTabProps {
-  onNewGroup?: () => void;
-}
-
-export default function ChatTab({ onNewGroup }: ChatTabProps) {
+export default function ChatTab() {
   const { privateChats, openChatWindow, onlineUserIds } = useChat();
+  const currentUser = useCurrentUser();
 
-  const currentClientId = (() => {
-    try {
-      const d = localStorage.getItem("client");
-      return d ? JSON.parse(d).clientId : null;
-    } catch {
-      return null;
-    }
-  })();
+  const currentUserId = currentUser?.userId ?? null;
+  const onlineCount = privateChats.filter((c) => onlineUserIds.includes(c.participantId)).length;
 
   return (
     <div className="chat-tab">
       <div className="chat-list-header">
-        <span>All Chats</span>
-        {onNewGroup && (
-          <button className="chat-new-group-btn" onClick={onNewGroup}>
-            + New Group
-          </button>
+        <div className="chat-list-header-title">
+          <span className="chat-list-eyebrow">Messages</span>
+          <span className="chat-list-heading">All Chats</span>
+        </div>
+        {privateChats.length > 0 && (
+          <span className="chat-list-online-badge">
+            <span className="chat-list-online-dot" /> {onlineCount} online
+          </span>
         )}
       </div>
 
       {privateChats.length === 0 ? (
         <div className="chat-empty-state">
-          <i className="pi pi-comments" />
+          <div className="chat-empty-icon-wrap">
+            <i className="pi pi-comments" />
+          </div>
           <p>No chats yet</p>
           <span>Click "Message" on a player to start chatting</span>
         </div>
@@ -39,12 +37,11 @@ export default function ChatTab({ onNewGroup }: ChatTabProps) {
           {privateChats.map((chat) => {
             const lastMsg = chat.messages[chat.messages.length - 1] ?? null;
             const isOnline = onlineUserIds.includes(chat.participantId);
-            const initial = chat.participantName?.[0]?.toUpperCase() || "?";
 
             let lastMsgText = "No messages yet";
             if (lastMsg) {
               lastMsgText =
-                lastMsg.senderId === currentClientId
+                lastMsg.senderId === currentUserId
                   ? `You: ${lastMsg.content}`
                   : lastMsg.content;
             }
@@ -55,10 +52,12 @@ export default function ChatTab({ onNewGroup }: ChatTabProps) {
                 className="chat-list-item"
                 onClick={() => openChatWindow(chat.id)}
               >
-                <div className="chat-list-avatar-wrap">
-                  <div className="chat-list-avatar">{initial}</div>
-                  <span className={`chat-list-dot ${isOnline ? "online" : "offline"}`} />
-                </div>
+                <Avatar
+                  name={chat.participantName}
+                  avatarKey={chat.participantAvatarKey}
+                  size="md"
+                  online={isOnline}
+                />
                 <div className="chat-list-info">
                   <div className="chat-list-top">
                     <span className="chat-list-name">{chat.participantName}</span>
@@ -76,4 +75,3 @@ export default function ChatTab({ onNewGroup }: ChatTabProps) {
     </div>
   );
 }
-

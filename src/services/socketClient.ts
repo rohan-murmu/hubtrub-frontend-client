@@ -12,15 +12,12 @@ export const MESSAGE_TYPES = {
   INTERFACE_PANEL: "interface:panel",
   INTERFACE_VIEWER: "interface:viewer",
   CHAT_PRIVATE: "chat:private",
-  CHAT_GROUP: "chat:group",
   CHAT_PUBLIC: "chat:public",
   ERROR: "error",
-  // Group lifecycle
-  GROUP_CREATE: "group:create",
-  GROUP_JOIN: "group:join",
-  GROUP_LEAVE: "group:leave",
-  GROUP_DELETE: "group:delete",
-  GROUP_UPDATE: "group:update",
+  // Asset lifecycle
+  ASSET_CREATE: "asset:create",
+  ASSET_UPDATE: "asset:update",
+  ASSET_DELETE: "asset:delete",
 } as const;
 
 // Chat subtypes
@@ -55,21 +52,27 @@ const emitMessage = (type: string, message: SocketMessage) => {
   }
 };
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+// Derive the WS base from VITE_API_URL when VITE_WS_URL is unset, swapping
+// http(s) → ws(s) so dev (http://localhost:9000) and prod just work.
+const WS_URL: string = (() => {
+  const explicit = import.meta.env.VITE_WS_URL as string | undefined;
+  if (explicit) return explicit;
+  const api = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:9000';
+  return api.replace(/^http/i, 'ws');
+})();
 
 
 export const socketClient = {
   /**
-   * Connect to WebSocket server
+   * Connect to WebSocket server. Auth comes from the hub_session cookie —
+   * the browser attaches it automatically on same-origin upgrades.
    */
-  async connect(roomId: string, clientId: string): Promise<void> {
-    // Prevent multiple simultaneous connection attempts
+  async connect(roomId: string): Promise<void> {
     if (isConnecting) {
       console.warn("⚠️ Connection already in progress, skipping...");
       return;
     }
 
-    // If already connected, don't open another one
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
       console.log("✅ WebSocket already connected or connecting");
       return;
@@ -77,7 +80,7 @@ export const socketClient = {
 
     return new Promise<void>((resolve, reject) => {
       isConnecting = true;
-      const wsUrl = `${WS_URL}/ws?roomId=${roomId}&clientId=${clientId}&type=ui`;
+      const wsUrl = `${WS_URL}/ws?roomId=${encodeURIComponent(roomId)}&type=ui`;
       console.log(`🔗 Connecting to WebSocket: ${wsUrl}`);
 
       try {
@@ -100,15 +103,13 @@ export const socketClient = {
           console.log(`📴 WebSocket closed (code: ${ev.code}, reason: ${ev.reason})`);
           isConnecting = false;
 
-          // Only auto-reconnect if it's NOT a normal close (code 1000)
-          // and we haven't exceeded max attempts
           if (ev.code !== 1000 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             reconnectAttempts++;
             console.log(
               `🔄 Attempting to reconnect (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${RECONNECT_DELAY_MS}ms...`
             );
             setTimeout(() => {
-              this.connect(roomId, clientId).catch((err) => {
+              this.connect(roomId).catch((err) => {
                 console.error("❌ Reconnection failed:", err);
               });
             }, RECONNECT_DELAY_MS);
@@ -189,13 +190,6 @@ export const socketClient = {
   },
 
   /**
-   * Listen for group chat messages
-   */
-  onChatGroup(callback: (message: SocketMessage) => void): () => void {
-    return this.on(MESSAGE_TYPES.CHAT_GROUP, callback);
-  },
-
-  /**
    * Listen for public chat messages
    */
   onChatPublic(callback: (message: SocketMessage) => void): () => void {
@@ -248,45 +242,30 @@ export const socketClient = {
     this.send({ type: MESSAGE_TYPES.PLAYER_STOP_ALL_FOLLOWERS, payload: { followedId } });
   },
 
-  // ─── Group Methods ────────────────────────────────────────────────────
-
-  sendGroupCreate(creatorId: string, groupName: string): void {
-    this.send({ type: MESSAGE_TYPES.GROUP_CREATE, payload: { creatorId, groupName } });
-  },
-
-  sendGroupJoin(clientId: string, groupId: string): void {
-    this.send({ type: MESSAGE_TYPES.GROUP_JOIN, payload: { clientId, groupId } });
-  },
-
-  sendGroupLeave(clientId: string, groupId: string): void {
-    this.send({ type: MESSAGE_TYPES.GROUP_LEAVE, payload: { clientId, groupId } });
-  },
-
-  sendGroupMessage(senderId: string, groupId: string, content: string, senderName?: string): void {
+  sendPublicChat(senderId: string, content: string, senderName?: string): void {
     this.send({
-      type: MESSAGE_TYPES.CHAT_GROUP,
-      payload: { subType: "message", senderId, senderName: senderName || senderId, groupId, content },
+      type: MESSAGE_TYPES.CHAT_PUBLIC,
+      payload: {
+        subType: CHAT_SUBTYPES.MESSAGE,
+        senderId,
+        senderName: senderName || senderId,
+        content,
+      },
     });
   },
 
-  onGroupCreate(callback: (message: SocketMessage) => void): () => void {
-    return this.on(MESSAGE_TYPES.GROUP_CREATE, callback);
+  // ─── Asset Methods ────────────────────────────────────────────────────
+
+  onAssetCreate(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.ASSET_CREATE, callback);
   },
 
-  onGroupJoin(callback: (message: SocketMessage) => void): () => void {
-    return this.on(MESSAGE_TYPES.GROUP_JOIN, callback);
+  onAssetUpdate(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.ASSET_UPDATE, callback);
   },
 
-  onGroupLeave(callback: (message: SocketMessage) => void): () => void {
-    return this.on(MESSAGE_TYPES.GROUP_LEAVE, callback);
-  },
-
-  onGroupDelete(callback: (message: SocketMessage) => void): () => void {
-    return this.on(MESSAGE_TYPES.GROUP_DELETE, callback);
-  },
-
-  onGroupUpdate(callback: (message: SocketMessage) => void): () => void {
-    return this.on(MESSAGE_TYPES.GROUP_UPDATE, callback);
+  onAssetDelete(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.ASSET_DELETE, callback);
   },
 
   /**

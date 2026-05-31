@@ -1,0 +1,191 @@
+.settings-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.settings-shell {
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+}
+
+/* ── Side tabs ─────────────────────────────────────────────────── */
+.settings-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: var(--sx-radius-md);
+  background: transparent;
+  color: var(--sx-text-muted);
+  font-family: var(--sx-font);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--sx-dur) var(--sx-ease), color var(--sx-dur) var(--sx-ease),
+    border-color var(--sx-dur) var(--sx-ease);
+}
+
+.settings-tab:hover {
+  background: var(--sx-bg-hover);
+  color: var(--sx-text);
+}
+
+.settings-tab.is-active {
+  background: var(--sx-accent-soft);
+  color: var(--sx-accent);
+  border-color: var(--sx-accent-ring);
+}
+
+/* ── Panel ─────────────────────────────────────────────────────── */
+.settings-panel {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.settings-title {
+  font-family: var(--sx-font-display);
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  color: var(--sx-text);
+}
+
+.settings-section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sx-text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* ── Theme segmented control ───────────────────────────────────── */
+.theme-segment {
+  display: inline-flex;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-md);
+  overflow: hidden;
+  background: var(--sx-bg-raised);
+}
+
+.theme-segment__option {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--sx-text-muted);
+  font-family: var(--sx-font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--sx-dur) var(--sx-ease), color var(--sx-dur) var(--sx-ease);
+}
+
+.theme-segment__option + .theme-segment__option {
+  border-left: 1px solid var(--sx-border);
+}
+
+.theme-segment__option.is-active {
+  background: var(--sx-accent);
+  color: var(--sx-accent-text);
+}
+
+/* ── Read-only field ───────────────────────────────────────────── */
+.settings-readonly {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--sx-border-subtle);
+  border-radius: var(--sx-radius-md);
+  background: var(--sx-bg-raised);
+  color: var(--sx-text-muted);
+  font-size: 0.9rem;
+}
+
+.settings-email {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.settings-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: var(--sx-radius-pill);
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--sx-border);
+}
+
+.settings-badge.is-ok {
+  color: var(--sx-accent);
+  background: var(--sx-accent-soft);
+  border-color: var(--sx-accent-ring);
+}
+
+.settings-badge.is-warn {
+  color: var(--sx-warning);
+  background: rgba(250, 204, 21, 0.12);
+  border-color: rgba(250, 204, 21, 0.4);
+}
+
+.settings-verify {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-password,
+.settings-delete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--sx-border-subtle);
+}
+
+.settings-danger-zone {
+  border: 1px solid var(--sx-danger);
+  border-radius: var(--sx-radius-lg);
+  padding: 1.1rem;
+  background: var(--sx-danger-soft);
+}
+
+.settings-danger-zone p {
+  color: var(--sx-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.85rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .settings-shell {
+    grid-template-columns: 1fr;
+  }
+  .settings-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

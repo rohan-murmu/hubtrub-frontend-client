@@ -1,0 +1,80 @@
+.explore-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--sx-bg-base);
+  color: var(--sx-text);
+  font-family: var(--sx-font);
+}
+
+.explore-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--sx-bg-elevated);
+  border-bottom: 1px solid var(--sx-border-subtle);
+  z-index: 10;
+}
+
+.explore-bar__title {
+  font-size: 0.95rem;
+  color: var(--sx-text-muted);
+}
+
+.explore-bar__title strong {
+  color: var(--sx-text);
+}
+
+.explore-bar__badge {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--sx-text-dim);
+  background: var(--sx-bg-raised);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-pill);
+  padding: 0.3rem 0.7rem;
+}
+
+.explore-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.explore-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.explore-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background:
+    radial-gradient(ellipse at 30% 20%, var(--sx-accent-soft) 0%, transparent 55%),
+    radial-gradient(ellipse at center, var(--sx-bg-elevated) 0%, var(--sx-bg-base) 100%);
+  color: var(--sx-text-muted);
+}
+
+.explore-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--sx-border);
+  border-top-color: var(--sx-accent);
+  border-radius: 50%;
+  animation: explore-spin 0.8s linear infinite;
+}
+
+@keyframes explore-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

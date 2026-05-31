@@ -1,0 +1,193 @@
+.asset-card {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--sx-bg-glass);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  padding: 50px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+  box-shadow: var(--sx-shadow-card);
+  z-index: 200;
+  animation: asset-card-in 0.18s var(--sx-ease);
+  color: var(--sx-text);
+  font-family: var(--sx-font);
+}
+
+@keyframes asset-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.asset-card-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--sx-border-subtle);
+  border-radius: 50%;
+  color: var(--sx-text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all var(--sx-dur) var(--sx-ease);
+}
+
+.asset-card-close:hover {
+  background: var(--sx-bg-hover);
+  color: var(--sx-text);
+}
+
+
+/* ── Thumbnail ─────────────────────────────────────────── */
+.asset-card-preview {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: var(--sx-radius-md);
+  background: var(--sx-bg-base);
+  border: 1px solid var(--sx-border-subtle);
+}
+
+.asset-card-preview-doc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--sx-accent);
+  background: linear-gradient(
+    140deg,
+    rgba(49, 197, 135, 0.08) 0%,
+    var(--sx-bg-raised) 100%
+  );
+}
+
+/* ── Meta block ────────────────────────────────────────── */
+.asset-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.asset-card-creator {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sx-text-muted);
+  font-weight: bold;
+}
+
+.asset-card-creator span {
+  font-weight: bold;
+  color: var(--sx-text);
+}
+
+.asset-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sx-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.asset-card-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.asset-card-stats i {
+  color: var(--sx-text-dim);
+  font-size: 0.85rem;
+}
+
+/* ── Error ─────────────────────────────────────────────── */
+.asset-card-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sx-danger);
+  background: var(--sx-danger-soft);
+  border: 1px solid rgba(255, 90, 95, 0.25);
+  padding: 6px 10px;
+  border-radius: var(--sx-radius-sm);
+}
+
+/* ── Actions ───────────────────────────────────────────── */
+.asset-card-view-btn {
+  padding: 10px 12px;
+  border: none;
+  background: var(--sx-accent);
+  color: var(--sx-accent-text);
+  border-radius: var(--sx-radius-md);
+  font-size: 0.88rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--sx-accent-glow);
+  transition: all var(--sx-dur) var(--sx-ease);
+}
+
+.asset-card-view-btn:hover {
+  background: var(--sx-accent-strong);
+  transform: translateY(-1px);
+}
+
+/* ── Loading skeleton ──────────────────────────────────── */
+.asset-card-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.asset-card-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: asset-card-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--sx-radius-sm);
+}
+
+.asset-card-skeleton-preview {
+  width: 100%;
+  height: 150px;
+  border-radius: var(--sx-radius-md);
+}
+
+.asset-card-skeleton-line {
+  height: 12px;
+  width: 100%;
+}
+
+@keyframes asset-card-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

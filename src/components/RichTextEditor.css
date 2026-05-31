@@ -1,0 +1,111 @@
+.rte {
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-md);
+  background: var(--sx-bg-raised);
+  overflow: hidden;
+}
+
+.rte:focus-within {
+  border-color: var(--sx-accent);
+  box-shadow: 0 0 0 3px var(--sx-accent-soft);
+}
+
+.rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-bottom: 1px solid var(--sx-border-subtle);
+  background: var(--sx-bg-elevated);
+}
+
+.rte-tool {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-sm);
+  background: var(--sx-bg-raised);
+  color: var(--sx-text-muted);
+  font-family: var(--sx-font);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--sx-dur) var(--sx-ease);
+}
+
+.rte-tool:hover {
+  color: var(--sx-text);
+  border-color: var(--sx-border-strong);
+}
+
+.rte-tool.is-active {
+  background: var(--sx-accent);
+  color: var(--sx-accent-text);
+  border-color: var(--sx-accent);
+}
+
+.rte-tool--bold {
+  font-weight: 700;
+}
+
+.rte-tool--italic {
+  font-style: italic;
+}
+
+.rte-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 4px;
+  background: var(--sx-border);
+}
+
+.rte-content {
+  padding: 12px 14px;
+  min-height: 140px;
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--sx-text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  outline: none;
+}
+
+.rte-content p {
+  margin: 0 0 0.6em;
+}
+
+.rte-content h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.4em 0;
+}
+
+.rte-content h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0.4em 0;
+}
+
+.rte-content ul,
+.rte-content ol {
+  padding-left: 1.4em;
+  margin: 0 0 0.6em;
+}
+
+.rte-content a {
+  color: var(--sx-accent);
+  text-decoration: underline;
+}
+
+.rte-content:empty::before,
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--sx-text-dim);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}

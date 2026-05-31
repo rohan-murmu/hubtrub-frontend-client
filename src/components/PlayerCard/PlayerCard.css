@@ -1,19 +1,23 @@
 .player-card {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 14px;
-  padding: 20px 18px 16px;
+  top: 20px;
+  right: 20px;
+  width: 240px;
+  background: var(--sx-bg-glass);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  padding: 22px 18px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  width: 180px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  gap: 4px;
   z-index: 200;
-  animation: player-card-in 0.15s ease;
+  animation: player-card-in 0.2s var(--sx-ease);
+  color: var(--sx-text);
+  font-family: var(--sx-font);
+  overflow: hidden;
 }
 
 @keyframes player-card-in {
@@ -27,58 +31,144 @@
   }
 }
 
-.player-card-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 2px solid #d1d5db;
-  background: #f3f4f6;
-  display: flex;
+.player-card-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+   width: 26px;
+  height: 26px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--sx-border-subtle);
+  border-radius: 50%;
+  color: var(--sx-text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all var(--sx-dur) var(--sx-ease);
+}
+
+.player-card-close:hover {
+  background: var(--sx-bg-hover);
+  color: var(--sx-text);
+}
+
+.player-card-avatar-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.player-card-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  margin-bottom: 14px;
+  text-align: center;
 }
 
 .player-card-username {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
-  text-align: center;
+  color: var(--sx-text);
   word-break: break-word;
+  letter-spacing: -0.01em;
 }
 
 .player-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.78rem;
-  color: #16a34a;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.player-card-status.is-online {
+  color: var(--sx-accent);
+}
+
+.player-card-status.is-offline {
+  color: var(--sx-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.player-card-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.player-card-status.is-online .player-card-status-dot {
+  background: var(--sx-accent);
+  box-shadow: 0 0 8px var(--sx-accent-ring);
+}
+
+.player-card-status.is-offline .player-card-status-dot {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .player-card-actions {
   display: flex;
   gap: 8px;
-  margin-top: 6px;
   width: 100%;
 }
 
 .player-card-btn {
-  flex: 1;
-  padding: 6px 0;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: var(--sx-radius-md);
+  font-size: 0.85rem;
   font-family: inherit;
-  color: #374151;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  font-weight: 500;
+  transition: all var(--sx-dur) var(--sx-ease);
+  border: 1px solid transparent;
 }
 
-.player-card-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+.player-card-btn-primary {
+  flex: 1;
+  background: var(--sx-accent);
+  color: var(--sx-accent-text);
+  border-color: var(--sx-accent);
+}
+
+.player-card-btn-primary:hover {
+  background: var(--sx-accent-strong);
+  border-color: var(--sx-accent-strong);
+  transform: translateY(-1px);
+}
+
+.player-card-btn-ghost {
+  width: 40px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--sx-text);
+  border-color: var(--sx-border-subtle);
+  flex-shrink: 0;
+}
+
+.player-card-btn-ghost:hover {
+  background: var(--sx-bg-hover);
+  border-color: var(--sx-border);
+  color: var(--sx-accent);
+}
+
+.player-card-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.player-card-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--sx-border-subtle);
+  color: var(--sx-text);
+  transform: none;
 }

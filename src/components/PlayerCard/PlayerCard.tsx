@@ -1,35 +1,65 @@
-import type { Client } from "../../types";
-import { useChat } from "../../context/ChatContext";
+import type { User } from "@/types";
+import { useChat } from "@/context/ChatContext";
+import Avatar from "@/components/common/Avatar";
 import "./PlayerCard.css";
 
 interface PlayerCardProps {
-  client: Client;
-  onFollow?: (client: Client) => void;
+  user: User;
+  onFollow?: (user: User) => void;
+  onClose: () => void;
 }
 
-export default function PlayerCard({ client, onFollow }: PlayerCardProps) {
-  const { createPrivateChat, openChatWindow } = useChat();
-
-  const initial = client.clientUserName?.[0]?.toUpperCase() || "?";
+export default function PlayerCard({ user, onFollow, onClose }: PlayerCardProps) {
+  const { createPrivateChat, openChatWindow, onlineUserIds } = useChat();
+  const isOnline = onlineUserIds.includes(user.userId);
 
   const handleMessage = () => {
-    if (!client.clientId) return;
-    const chatId = createPrivateChat(client.clientId, client.clientUserName);
+    if (!user.userId) return;
+    const chatId = createPrivateChat(
+      user.userId,
+      user.username ?? user.userId,
+      user.avatarKey,
+    );
     openChatWindow(chatId);
   };
 
   return (
     <div className="player-card">
-      <div className="player-card-avatar">
-        {initial}
+      <button className="player-card-close" onClick={onClose} aria-label="Close">
+        <i className="pi pi-times" />
+      </button>
+
+      <div className="player-card-avatar-wrap">
+        <Avatar name={user.username} avatarKey={user.avatarKey} size="xl" />
       </div>
-      <p className="player-card-username">{client.clientUserName}</p>
-      <span className="player-card-status">online</span>
+
+      <div className="player-card-identity">
+        <p className="player-card-username">
+          {user.username}
+        </p>
+        <span className={`player-card-status ${isOnline ? "is-online" : "is-offline"}`}>
+          <span className="player-card-status-dot" />
+          {isOnline ? "In the world" : "Off the world"}
+        </span>
+      </div>
+
       <div className="player-card-actions">
-        <button className="player-card-btn" onClick={() => onFollow?.(client)}>Follow</button>
-        <button className="player-card-btn" onClick={handleMessage}>Message</button>
+        <button
+          className="player-card-btn player-card-btn-primary"
+          onClick={handleMessage}
+        >
+          <i className="pi pi-send" /> Message
+        </button>
+        <button
+          className="player-card-btn player-card-btn-ghost"
+          onClick={() => onFollow?.(user)}
+          aria-label="Follow"
+          title={isOnline ? "Follow" : "User is not in this world"}
+          disabled={!isOnline}
+        >
+          <i className="pi pi-user-plus" />
+        </button>
       </div>
     </div>
   );
 }
-

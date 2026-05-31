@@ -1,121 +1,161 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "primereact/button";
-import { Menu } from "primereact/menu";
-import type { MenuItem } from "primereact/menuitem";
-import type { Room, Client } from "../types";
-import { roomService, authService } from "../services/api";
-import RoomList from "../containers/RoomList";
-import "./MainPage.css";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { Room } from '@/types';
+import { roomService } from '@/services/api';
+import { useCurrentUser } from '@/context/UserContext';
+import AppShell from '@/components/ui/AppShell';
+import Button from '@/components/ui/Button';
+import UserMenu from '@/components/ui/UserMenu';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import RoomCard from '@/components/common/RoomCard';
+import { errorMessage } from '@/utils/errorMessage';
+import { isGuest } from '@/utils/isGuest';
+import './MainPage.css';
 
-interface MainPageProps {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-}
+type Tab = 'home' | 'mine';
 
-export default function MainPage({ isDarkMode, toggleTheme }: MainPageProps) {
+export default function MainPage() {
   const navigate = useNavigate();
-  const menuRef = useRef<Menu>(null);
+  const user = useCurrentUser();
+  const guest = isGuest(user);
 
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [user, setUser] = useState<Client | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('home');
+  const [homeRooms, setHomeRooms] = useState<Room[] | null>(null);
+  const [myRooms, setMyRooms] = useState<Room[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Room | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error("Failed to parse user data:", error);
-      }
-    }
-    fetchRooms();
-  }, []);
-
-  const fetchRooms = async () => {
-    try {
+    let cancelled = false;
+    const load = async () => {
       setLoading(true);
-      const data = await roomService.getRooms();
-      setRooms(data);
-    } catch (error) {
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        if (tab === 'home' && homeRooms === null) {
+          const data = await roomService.getRooms();
+          if (!cancelled) setHomeRooms(data);
+        } else if (tab === 'mine' && myRooms === null) {
+          const data = await roomService.getMyRooms();
+          if (!cancelled) setMyRooms(data);
+        }
+      } catch {
+        if (!cancelled) {
+          if (tab === 'home') setHomeRooms([]);
+          else setMyRooms([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, homeRooms, myRooms]);
 
-  const handleDeleteRoom = async (roomId: string) => {
+  const confirmDelete = async () => {
+    const roomId = pendingDelete?.roomId;
+    if (!roomId) return;
+    setDeleteError(null);
+    setDeleteBusy(true);
     try {
       await roomService.deleteRoom(roomId);
-      setRooms(rooms.filter((r) => r.roomId !== roomId));
-    } catch (error) {}
+      setMyRooms((prev) => (prev ? prev.filter((r) => r.roomId !== roomId) : prev));
+      // Keep the Home list fresh too if it was already loaded.
+      setHomeRooms((prev) => (prev ? prev.filter((r) => r.roomId !== roomId) : prev));
+      setPendingDelete(null);
+    } catch (e) {
+      setDeleteError(errorMessage(e, 'Failed to delete hub'));
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
-  const menuItems: MenuItem[] = [
-    {
-      className:"drop-menu-items",
-      label: "Update Profile",
-      command: () => navigate("/profile/edit"),
-    },
-    {
-      separator: true,
-    },
-    {
-      className:"drop-menu-items",
-      label: isDarkMode ? "Light Mode" : "Dark Mode",
-      disabled: true, // Disable the dark mode toggle for now
-      command: toggleTheme,
-    },
-    {
-      separator: true,
-    },
-    {
-      className:"drop-menu-items",
-      label: "Logout",
-      command: () => {
-        authService.logout();
-        navigate("/");
-      },
-    },
-  ];
+  const rooms = tab === 'home' ? homeRooms : myRooms;
+  const title = tab === 'home' ? 'Latest hubs' : 'My Hubs';
+
+  const headerRight = (
+    <>
+      {!guest && (
+        <Button icon="pi pi-plus" onClick={() => navigate('/hub/create')}>
+          Create Hub
+        </Button>
+      )}
+      {user && <UserMenu user={user} />}
+    </>
+  );
 
   return (
-    <>
-      {/* Header */}
-      <header className="main-header">
-        <div className="header-container">
-          <div className="header-top">
-            <Button
-              label="Create Hub"
-              onClick={() => navigate("/hub/create")}
-              className="welcome-button"
-            />
-            <Menu model={menuItems} popup ref={menuRef} id="popup_menu" className="drop-menu" />
-            <Button
-              rounded
-              icon="pi pi-bars"
-              onClick={(e) => menuRef.current?.toggle(e)}
-              className="welcome-button p-button-rounded p-button-text"
-            />
-          </div>
-        </div>
-      </header>
+    <AppShell headerRight={headerRight}>
+      <div className="hub-layout">
+        <aside className="hub-sidebar">
+          <button
+            type="button"
+            className={`hub-sidebar__tab${tab === 'home' ? ' is-active' : ''}`}
+            onClick={() => setTab('home')}
+          >
+            <i className="pi pi-home" aria-hidden="true" />
+            Home
+          </button>
+          {!guest && (
+            <button
+              type="button"
+              className={`hub-sidebar__tab${tab === 'mine' ? ' is-active' : ''}`}
+              onClick={() => setTab('mine')}
+            >
+              <i className="pi pi-folder" aria-hidden="true" />
+              My Hubs
+            </button>
+          )}
+        </aside>
 
-      {/* Main Content */}
-      <main className="main-content">
-        {loading ? (
-          <div className="loading-state">
-            <p>Loading hubs...</p>
-          </div>
-        ) : (
-          <RoomList
-            rooms={rooms}
-            userId={user?.clientUserName}
-            onEdit={(room) => navigate(`/hub/${room.roomId}/edit`)}
-            onDelete={handleDeleteRoom}
-          />
-        )}
-      </main>
-    </>
+        <main className="hub-main">
+          <h1 className="hub-main__title">{title}</h1>
+
+          {loading && rooms === null ? (
+            <div className="hub-state">Loading hubs…</div>
+          ) : rooms && rooms.length > 0 ? (
+            <div className="hub-grid">
+              {rooms.map((room) => (
+                <RoomCard
+                  key={room.roomId}
+                  room={room}
+                  showAdmin={tab === 'mine'}
+                  onEdit={() => navigate(`/hub/${room.roomId}/edit`)}
+                  onDelete={() => setPendingDelete(room)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="hub-state">
+              {tab === 'mine'
+                ? "You haven't created any hubs yet."
+                : 'No hubs available yet. Create one to get started!'}
+            </div>
+          )}
+        </main>
+      </div>
+
+      <ConfirmModal
+        open={!!pendingDelete}
+        title="Delete hub?"
+        message={
+          <>
+            Delete <strong>{pendingDelete?.name}</strong>? This permanently removes
+            the hub and cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        danger
+        loading={deleteBusy}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setPendingDelete(null);
+          setDeleteError(null);
+        }}
+      />
+    </AppShell>
   );
 }

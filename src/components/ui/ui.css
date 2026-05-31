@@ -1,0 +1,366 @@
+/* Shared primitives for the redesigned (non-Room) pages. Token-driven so they
+   follow the global light/dark theme set on <html data-theme>. */
+
+/* ── App shell ─────────────────────────────────────────────────── */
+.sx-app-shell {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--sx-bg-base);
+  color: var(--sx-text);
+  font-family: var(--sx-font);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.sx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  height: 64px;
+  border-bottom: 1px solid var(--sx-border-subtle);
+  background: var(--sx-bg-elevated);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.sx-logo {
+  font-family: var(--sx-font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  color: var(--sx-text);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sx-logo .sx-logo-accent {
+  color: var(--sx-accent);
+}
+
+.sx-header__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ── Heading (display font) ────────────────────────────────────── */
+.sx-display {
+  font-family: var(--sx-font-display);
+  letter-spacing: 0.02em;
+  color: var(--sx-text);
+  line-height: 1.15;
+}
+
+/* ── Panel / card ──────────────────────────────────────────────── */
+.sx-panel {
+  background: var(--sx-bg-glass);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  box-shadow: var(--sx-shadow-card);
+}
+
+.sx-panel--solid {
+  background: var(--sx-bg-elevated);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ── Button ────────────────────────────────────────────────────── */
+.sx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--sx-radius-md);
+  border: 1px solid transparent;
+  font-family: var(--sx-font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--sx-dur) var(--sx-ease),
+    background var(--sx-dur) var(--sx-ease),
+    border-color var(--sx-dur) var(--sx-ease), opacity var(--sx-dur) var(--sx-ease);
+  white-space: nowrap;
+}
+
+.sx-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sx-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.sx-btn--primary {
+  background: var(--sx-accent);
+  color: var(--sx-accent-text);
+  border-color: var(--sx-accent);
+}
+
+.sx-btn--primary:not(:disabled):hover {
+  background: var(--sx-accent-strong);
+  border-color: var(--sx-accent-strong);
+}
+
+.sx-btn--ghost {
+  background: var(--sx-bg-hover);
+  color: var(--sx-text);
+  border-color: var(--sx-border);
+}
+
+.sx-btn--ghost:not(:disabled):hover {
+  border-color: var(--sx-border-strong);
+  color: var(--sx-accent);
+}
+
+.sx-btn--subtle {
+  background: transparent;
+  color: var(--sx-text-muted);
+  border-color: transparent;
+}
+
+.sx-btn--subtle:not(:disabled):hover {
+  color: var(--sx-text);
+  background: var(--sx-bg-hover);
+}
+
+.sx-btn--danger {
+  background: var(--sx-danger-soft);
+  color: var(--sx-danger);
+  border-color: var(--sx-danger);
+}
+
+.sx-btn--danger:not(:disabled):hover {
+  background: var(--sx-danger);
+  color: #fff;
+}
+
+.sx-btn--block {
+  width: 100%;
+}
+
+.sx-btn--lg {
+  padding: 0.8rem 1.4rem;
+  font-size: 1rem;
+}
+
+.sx-btn--sm {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.sx-btn__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: sx-spin 0.7s linear infinite;
+}
+
+@keyframes sx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Field / input ─────────────────────────────────────────────── */
+.sx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sx-field__labelrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sx-field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sx-text-muted);
+  letter-spacing: 0.01em;
+}
+
+.sx-field__count {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--sx-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.sx-field__count.is-max {
+  color: var(--sx-warning);
+}
+
+.sx-field__control {
+  display: flex;
+  align-items: center;
+  background: var(--sx-bg-raised);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-md);
+  transition: border-color var(--sx-dur) var(--sx-ease),
+    box-shadow var(--sx-dur) var(--sx-ease);
+}
+
+.sx-field__control:focus-within {
+  border-color: var(--sx-accent);
+  box-shadow: 0 0 0 3px var(--sx-accent-soft);
+}
+
+.sx-field__control.is-invalid {
+  border-color: var(--sx-danger);
+}
+
+.sx-field__control.is-invalid:focus-within {
+  box-shadow: 0 0 0 3px var(--sx-danger-soft);
+}
+
+.sx-field__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--sx-text);
+  font-family: var(--sx-font);
+  font-size: 0.92rem;
+}
+
+.sx-field__input::placeholder {
+  color: var(--sx-text-dim);
+}
+
+.sx-field__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.sx-field__adornment {
+  display: flex;
+  align-items: center;
+  padding: 0 0.6rem;
+  color: var(--sx-text-dim);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.sx-field__error {
+  font-size: 0.78rem;
+  color: var(--sx-danger);
+}
+
+.sx-field__hint {
+  font-size: 0.78rem;
+  color: var(--sx-text-dim);
+}
+
+.sx-field__hint.is-ok {
+  color: var(--sx-accent);
+}
+
+.sx-field__hint.is-bad {
+  color: var(--sx-danger);
+}
+
+/* ── Alert ─────────────────────────────────────────────────────── */
+.sx-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--sx-radius-md);
+  border: 1px solid var(--sx-border);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.sx-alert__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sx-alert--error {
+  background: var(--sx-danger-soft);
+  border-color: var(--sx-danger);
+  color: var(--sx-danger);
+}
+
+.sx-alert--success {
+  background: var(--sx-accent-soft);
+  border-color: var(--sx-accent);
+  color: var(--sx-accent);
+}
+
+.sx-alert--info {
+  background: var(--sx-bg-hover);
+  border-color: var(--sx-border);
+  color: var(--sx-text-muted);
+}
+
+/* ── Modal ─────────────────────────────────────────────────────── */
+.sx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--sx-bg-overlay);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 200;
+  animation: sx-modal-fade 0.16s var(--sx-ease);
+}
+
+@keyframes sx-modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sx-modal {
+  width: 100%;
+  max-width: 400px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sx-modal__title {
+  font-family: var(--sx-font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  color: var(--sx-text);
+}
+
+.sx-modal__body {
+  color: var(--sx-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.sx-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}

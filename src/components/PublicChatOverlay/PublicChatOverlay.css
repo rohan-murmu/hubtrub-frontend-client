@@ -1,0 +1,137 @@
+/* PublicChatOverlay lives in the bottom-left corner of the game area. The
+   message column floats above the input and fades upward as it expires, so
+   the overlay feels like a quiet chat ambience rather than a panel. */
+
+.public-chat-overlay {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+  pointer-events: none;
+  font-family: var(--sx-font);
+}
+
+.public-chat-messages {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 6px;
+  max-height: 220px;
+  overflow: hidden;
+}
+
+.public-chat-message {
+  padding: 8px 14px;
+  background: var(--sx-bg-glass);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--sx-border-subtle);
+  color: var(--sx-text);
+  border-radius: var(--sx-radius-lg);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  word-break: break-word;
+  /* 6s feels long enough to read a sentence, short enough that the column
+     stays uncrowded during fast chat. */
+  animation: public-chat-fade-up 6s ease-out forwards;
+  align-self: flex-start;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+.public-chat-message .sender {
+  font-weight: 700;
+  color: var(--sx-accent);
+  margin-right: 6px;
+}
+
+.public-chat-message.is-offline .sender {
+  color: var(--sx-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.public-chat-message.is-offline {
+  opacity: 0.85;
+}
+
+.public-chat-presence-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.public-chat-presence-dot.is-online {
+  background: var(--sx-accent);
+  box-shadow: 0 0 6px var(--sx-accent-ring);
+}
+
+.public-chat-presence-dot.is-offline {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+@keyframes public-chat-fade-up {
+  0%   { opacity: 0; transform: translateY(8px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  60%  { opacity: 1; transform: translateY(-8px); }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+
+.public-chat-input-wrap {
+  pointer-events: auto;
+}
+
+/* Single pill containing the text input and the emoji trigger */
+.public-chat-input-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 14px;
+  background: var(--sx-bg-glass);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  transition: border-color var(--sx-dur) var(--sx-ease),
+              box-shadow var(--sx-dur) var(--sx-ease);
+}
+
+.public-chat-input-pill:focus-within {
+  border-color: var(--sx-accent);
+  box-shadow: 0 0 0 3px var(--sx-accent-soft);
+}
+
+.public-chat-input {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  color: var(--sx-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.public-chat-input::placeholder {
+  color: var(--sx-text-dim);
+}
+
+.public-chat-emoji {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.public-chat-emoji .emoji-picker-trigger {
+  color: var(--sx-text-muted);
+  padding: 4px 6px;
+}
+
+.public-chat-emoji .emoji-picker-trigger:hover {
+  color: var(--sx-accent);
+}

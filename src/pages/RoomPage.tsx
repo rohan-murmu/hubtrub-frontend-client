@@ -1,22 +1,48 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "primereact/button";
-import type { Room, Client, GroupInfo } from "../types";
-import { roomService, userService } from "../services/api";
-import { sendMessageToIframe, cleanupGodotSession, listenToIframeMessages } from "../utils/godotBridge";
-import { socketClient } from "../services/socketClient";
-import { ChatProvider, useChat } from "../context/ChatContext";
-import Sidebar from "../components/Sidebar/Sidebar";
-import PlayerCard from "../components/PlayerCard/PlayerCard";
-import PrivateChatWindow from "../components/PrivateChatWindow/PrivateChatWindow";
-import FollowingBanner from "../components/FollowingBanner/FollowingBanner";
-import FollowedByBanner from "../components/FollowedByBanner/FollowedByBanner";
-import CreateGroupModal from "../components/CreateGroupModal/CreateGroupModal";
-import GroupChatView from "../components/GroupChatView/GroupChatView";
-import GroupCard from "../components/GroupCard/GroupCard";
+import Button from "@/components/ui/Button";
+import type { Asset, AssetWithUrl, Room, User } from "@/types";
+import { assetService, roomService, userService } from "@/services/api";
+import { useCurrentUser } from "@/context/UserContext";
+import { sendMessageToIframe, cleanupGodotSession, listenToIframeMessages } from "@/utils/godotBridge";
+import { socketClient } from "@/services/socketClient";
+import { ChatProvider, useChat } from "@/context/ChatContext";
+import Sidebar from "@/components/Sidebar/Sidebar";
+import PlayerCard from "@/components/PlayerCard/PlayerCard";
+import AssetCard from "@/components/AssetCard/AssetCard";
+import AssetViewerModal from "@/components/AssetViewerModal/AssetViewerModal";
+import PrivateChatWindow from "@/components/PrivateChatWindow/PrivateChatWindow";
+import FollowingBanner from "@/components/FollowingBanner/FollowingBanner";
+import FollowedByBanner from "@/components/FollowedByBanner/FollowedByBanner";
+import PublicChatOverlay from "@/components/PublicChatOverlay/PublicChatOverlay";
+import GameLoadingOverlay, {
+  type LoadingStage,
+  type LoadingStageId,
+} from "@/components/GameLoadingOverlay/GameLoadingOverlay";
+import InlineLoadingToast from "@/components/InlineLoadingToast/InlineLoadingToast";
 import "./RoomPage.css";
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+const INITIAL_STAGES: LoadingStage[] = [
+  { id: "fetch_room", label: "Fetching room", status: "pending" },
+  { id: "engine_download", label: "Downloading game engine", status: "pending" },
+  { id: "engine_ready", label: "Initializing engine", status: "pending" },
+  { id: "ws_connect", label: "Connecting to game server", status: "pending" },
+  { id: "world_render", label: "Rendering world", status: "pending" },
+  { id: "load_assets", label: "Loading assets", status: "pending" },
+  { id: "load_players", label: "Loading players", status: "pending" },
+  { id: "ready", label: "Ready to play", status: "pending" },
+];
+
+// Godot's WebSocketPeer and HTTPClient can't resolve relative URLs against a
+// page origin like the browser does, so convert VITE_API_URL (which may be
+// "/api" in same-origin docker deployments) to an absolute base before
+// handing it to the iframe.
+const toAbsolute = (value: string): string =>
+  /^https?:/i.test(value) ? value : `${window.location.origin}${value.startsWith('/') ? value : '/' + value}`;
+
+const GODOT_API_BASE = toAbsolute((import.meta.env.VITE_API_URL as string) || 'http://localhost:9000');
+const WS_URL: string =
+  (import.meta.env.VITE_WS_URL as string) || GODOT_API_BASE.replace(/^http/i, 'ws');
 
 /** Renders floating private chat windows inside ChatProvider */
 function ChatWindowsLayer() {
@@ -39,23 +65,70 @@ export default function RoomPage() {
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const socketConnectedRef = useRef(false);
-  const clientRef = useRef<Client | null>(null);
+  const currentUser = useCurrentUser();
+  const userRef = useRef<User | null>(currentUser);
+  userRef.current = currentUser;
 
   const [room, setRoom] = useState<Room | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
-  clientRef.current = client;
-  const [loading, setLoading] = useState(true);
+  const [roomHost, setRoomHost] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [godotConfigSent, setGodotConfigSent] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState<Client | null>(null);
-  const [followingPlayer, setFollowingPlayer] = useState<Client | null>(null);
-  const [followerIds, setFollowerIds] = useState<string[]>([]);
-  const [followersMap, setFollowersMap] = useState<Record<string, Client>>({});
 
-  // Group state
-  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
-  const [activeGroup, setActiveGroup] = useState<GroupInfo | null>(null);
-  const [selectedGroupCard, setSelectedGroupCard] = useState<GroupInfo | null>(null);
+  // ─── Loading-stage tracking ──────────────────────────────────────────
+  // Stages progress from React (room fetch, socket open) and from Godot
+  // (engine download, engine ready, world render, asset/player spawn, self
+  // joined). The overlay stays mounted on top of the iframe until the
+  // final "ready" stage is marked done.
+  const [loadingStages, setLoadingStages] = useState<LoadingStage[]>(INITIAL_STAGES);
+  const [loadingMessage, setLoadingMessage] = useState("Connecting...");
+  // Once the initial load completes, latch the big overlay shut. Late
+  // LOADING_PROGRESS events from Godot (asset spawns, scene swaps) would
+  // otherwise flip a stage back to "active" and re-show the full splash —
+  // those are now surfaced via the small InlineLoadingToast instead.
+  const [initialReady, setInitialReady] = useState(false);
+
+  const markStage = (
+    id: LoadingStageId,
+    status: "active" | "done",
+    opts?: { detail?: string; message?: string },
+  ) => {
+    setLoadingStages((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status, detail: opts?.detail ?? s.detail } : s)),
+    );
+    if (opts?.message) setLoadingMessage(opts.message);
+  };
+
+  const allStagesDone = loadingStages.every((s) => s.status === "done");
+  // `allLoaded` (old name) is kept as a synonym for the splash overlay's
+  // visibility — true once we've gone ready, never flips false again.
+  const allLoaded = initialReady || allStagesDone;
+  const hasActiveStage = loadingStages.some((s) => s.status === "active");
+  const showInlineLoader = initialReady && hasActiveStage;
+
+  useEffect(() => {
+    if (allStagesDone && !initialReady) {
+      setInitialReady(true);
+    }
+  }, [allStagesDone, initialReady]);
+  // Unified overlay-card state — only one of player/asset cards is ever
+  // visible at a time, so we track which kind is active and clear the others
+  // whenever a new one is selected.
+  type ActiveCard =
+    | { kind: "player"; user: User }
+    | { kind: "asset"; assetId: string; asset: AssetWithUrl | null }
+    | null;
+  const [activeCard, setActiveCard] = useState<ActiveCard>(null);
+  const closeActiveCard = () => setActiveCard(null);
+  const selectedPlayer = activeCard?.kind === "player" ? activeCard.user : null;
+  const selectedAsset = activeCard?.kind === "asset" ? activeCard.asset : null;
+  const selectedAssetId = activeCard?.kind === "asset" ? activeCard.assetId : null;
+
+  const [followingPlayer, setFollowingPlayer] = useState<User | null>(null);
+  const [followerIds, setFollowerIds] = useState<string[]>([]);
+  const [followersMap, setFollowersMap] = useState<Record<string, User>>({});
+
+  // Asset full-view modal (separate from the card overlay above).
+  const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
 
   // Synchronously null the iframe on unmount (runs before React removes it from DOM,
   // so the ref is still valid and the Godot WebSocket gets a proper close frame).
@@ -70,10 +143,10 @@ export default function RoomPage() {
   // Handle browser tab close / page refresh — send leave and kill connections
   useEffect(() => {
     const handleLeave = () => {
-      if (clientRef.current?.clientId && socketClient.isConnected()) {
+      if (userRef.current?.userId && socketClient.isConnected()) {
         socketClient.send({
           type: "player:leave",
-          payload: { pid: clientRef.current.clientId },
+          payload: { pid: userRef.current.userId },
         });
       }
       if (iframeRef.current) {
@@ -91,32 +164,30 @@ export default function RoomPage() {
     };
   }, []);
 
-  // Fetch room data and client info
+  // Fetch room data
   useEffect(() => {
     const initializeRoom = async () => {
       try {
         if (!roomId) {
           setError("Room ID not provided");
-          setLoading(false);
           return;
         }
 
-        // Fetch room data
+        markStage("fetch_room", "active", { message: "Fetching room metadata..." });
+        markStage("engine_download", "active", { message: "Downloading game engine..." });
+
         const roomData = await roomService.getRoomById(roomId);
         setRoom(roomData);
-
-        // Get client data from localStorage
-        const clientData = localStorage.getItem("client");
-        if (clientData) {
-          const parsedClient = JSON.parse(clientData);
-          setClient(parsedClient);
+        markStage("fetch_room", "done", { message: `Room "${roomData?.name ?? roomId}" loaded` });
+        // Resolve the host's username so the Info panel shows a name, not a raw userId
+        if (roomData?.userId) {
+          userService.getById(roomData.userId)
+            .then((host) => { if (host) setRoomHost(host); })
+            .catch(() => { /* fall back to userId in UI */ });
         }
-
-        setLoading(false);
       } catch (err) {
         console.error("Failed to fetch room data:", err);
         setError("Failed to load room");
-        setLoading(false);
       }
     };
 
@@ -124,78 +195,128 @@ export default function RoomPage() {
   }, [roomId]);
 
   useEffect(() => {
-  const cleanup = listenToIframeMessages((message) => {
-    console.log("📥 RoomPage received message from iframe:", message);
-    
-    if (message?.type === "GODOT_READY") {
-      console.log("🎮 Godot is ready!");
+    const cleanup = listenToIframeMessages((message) => {
+      if (message?.type === "GODOT_READY") {
+        console.log("🎮 Godot is ready!");
+        markStage("engine_download", "done", { message: "Engine downloaded" });
+        markStage("engine_ready", "done", { message: "Engine initialized" });
 
-      if (iframeRef.current) {
-        sendMessageToIframe(
-          iframeRef.current,
-          "SET_CONNECTION_CONFIG",
-          {
-            wsUrl: WS_URL,
-            roomId: roomId,
-            clientId: client?.clientId,
-            worldKey: room?.roomScene,
-            playerKey: client?.clientAvatar,
-          }
-        );
-        console.log("✅ Godot config sent, marking as ready for React socket connection");
-        setGodotConfigSent(true);
+        if (iframeRef.current) {
+          sendMessageToIframe(
+            iframeRef.current,
+            "SET_CONNECTION_CONFIG",
+            {
+              wsBaseUrl: WS_URL,
+              // Backend HTTP base — used by the game to fetch usernames and
+              // asset images. Must be absolute since Godot's HTTPClient can't
+              // resolve relative paths against a page origin.
+              apiBaseUrl: GODOT_API_BASE,
+              roomId: roomId,
+              clientId: currentUser?.userId,
+              worldKey: room?.sceneKey,
+              playerKey: currentUser?.avatarKey,
+            }
+          );
+          console.log("✅ Godot config sent, marking as ready for React socket connection");
+          markStage("ws_connect", "active", { message: "Opening game socket..." });
+          setGodotConfigSent(true);
+        }
       }
-    }
-    
-    if (message?.type === "PLAYER_CLICKED") {
-      const clickedClientId = message.payload?.clientId;
-      console.log("👆 RoomPage received PLAYER_CLICKED:", clickedClientId);
-      if (clickedClientId) {
-        userService.getClientById(clickedClientId)
-          .then((data) => setSelectedPlayer(data))
-          .catch((err) => console.error("Failed to fetch clicked player:", err));
+
+      // Loading-stage updates pushed by Godot. Payload: { stage, message?, detail? }.
+      if (message?.type === "LOADING_PROGRESS") {
+        const payload = message.payload ?? {};
+        const stage: LoadingStageId | undefined = payload.stage;
+        const status: "active" | "done" = payload.status === "done" ? "done" : "active";
+        if (stage) {
+          markStage(stage, status, {
+            detail: payload.detail,
+            message: payload.message,
+          });
+        } else if (payload.message) {
+          setLoadingMessage(payload.message);
+        }
       }
-    }
 
-    if (message?.type === "OBJECT_SELECTED" && message.payload?.objectType === "player") {
-      const objectId = message.payload?.objectId;
-      if (objectId) {
-        userService.getClientById(objectId)
-          .then((data) => setSelectedPlayer(data))
-          .catch((err) => console.error("Failed to fetch selected player:", err));
+      // Engine download progress streamed from public/game/index.html's
+      // engine.startGame onProgress hook. Comes as { current, total } in
+      // bytes — convert to a percent for the side-detail chip.
+      if (message?.type === "ENGINE_DOWNLOAD_PROGRESS") {
+        const { current = 0, total = 0 } = message.payload ?? {};
+        if (total > 0) {
+          const pct = Math.min(100, Math.round((current / total) * 100));
+          markStage("engine_download", "active", {
+            detail: `${pct}%`,
+            message: `Downloading game engine (${pct}%)...`,
+          });
+        }
       }
-    }
 
-    if (message?.type === "PLAYER_DESELECTED" || message?.type === "OBJECT_DESELECTED") {
-      setSelectedPlayer(null);
-      setSelectedGroupCard(null);
-    }
-
-    // Group dialog clicked in game — show join card
-    if (message?.type === "GROUP_DIALOG_CLICKED") {
-      const groupData = message.payload;
-      if (groupData) {
-        setSelectedGroupCard({
-          groupId: groupData.groupId,
-          groupName: groupData.groupName,
-          members: groupData.members || [],
-          x: groupData.x || 0,
-          y: groupData.y || 0,
-        });
+      if (message?.type === "PLAYER_CLICKED") {
+        const clickedClientId = message.payload?.clientId;
+        console.log("👆 RoomPage received PLAYER_CLICKED:", clickedClientId);
+        if (clickedClientId) {
+          userService.getById(clickedClientId)
+            .then((data) => { if (data) setActiveCard({ kind: "player", user: data }); })
+            .catch((err) => console.error("Failed to fetch clicked player:", err));
+        }
       }
-    }
 
-    if (message?.type === "GROUP_DIALOG_DESELECTED") {
-      setSelectedGroupCard(null);
-    }
-  });
+      if (message?.type === "OBJECT_SELECTED" && message.payload?.objectType === "player") {
+        const objectId = message.payload?.objectId;
+        if (objectId) {
+          userService.getById(objectId)
+            .then((data) => { if (data) setActiveCard({ kind: "player", user: data }); })
+            .catch((err) => console.error("Failed to fetch selected player:", err));
+        }
+      }
 
-  return cleanup;
-}, [room, client, roomId]);
+      if (message?.type === "OBJECT_SELECTED" && message.payload?.objectType === "asset") {
+        const objectId = message.payload?.objectId;
+        if (objectId) {
+          // Show the card immediately in a loading state, then fill in details
+          // once the API call returns.
+          setActiveCard({ kind: "asset", assetId: objectId, asset: null });
+          assetService.getAssetById(objectId)
+            .then((data) => {
+              setActiveCard((prev) =>
+                prev && prev.kind === "asset" && prev.assetId === objectId
+                  ? { ...prev, asset: data }
+                  : prev,
+              );
+            })
+            .catch((err) => console.error("Failed to fetch selected asset:", err));
+        }
+      }
+
+      if (message?.type === "PLAYER_DESELECTED" || message?.type === "OBJECT_DESELECTED") {
+        setActiveCard(null);
+      }
+
+      // Godot finished placement — persist coords. Backend transitions the
+      // DRAFT row to PLACED and broadcasts asset:create to the room, so we
+      // don't need to spawn anything here ourselves.
+      if (message?.type === "ASSET_PLACED") {
+        const { assetId, xpos, ypos } = message.payload ?? {};
+        if (assetId && Number.isFinite(xpos) && Number.isFinite(ypos)) {
+          assetService.placeAsset(assetId, Number(xpos), Number(ypos))
+            .catch((err) => console.error("Failed to place asset:", err));
+        }
+      }
+
+      if (message?.type === "ASSET_PLACEMENT_CANCELLED") {
+        // No-op for now; the draft row stays in the AssetTab so the user can
+        // try again. If we add a "placement in progress" UI flag later, this
+        // is where we'd clear it.
+      }
+    });
+
+    return cleanup;
+  }, [room, currentUser, roomId]);
 
   // Connect React to WebSocket server and setup listeners
   useEffect(() => {
-    if (!client || !roomId || socketConnectedRef.current || !godotConfigSent) {
+    if (!currentUser || !roomId || socketConnectedRef.current || !godotConfigSent) {
       return;
     }
 
@@ -206,9 +327,10 @@ export default function RoomPage() {
     const connectToSocket = async () => {
       try {
         console.log("🔗 Attempting React WebSocket connection...");
-        await socketClient.connect(roomId, client.clientId || "");
+        await socketClient.connect(roomId);
         socketConnectedRef.current = true;
         console.log("✅ React WebSocket connected successfully");
+        markStage("ws_connect", "done", { message: "Game server connected" });
 
         // Setup message listeners
         unsubscribePlayerJoin = socketClient.onPlayerJoin((message) => {
@@ -227,13 +349,13 @@ export default function RoomPage() {
         socketClient.onFollowerUpdate((message) => {
           const ids: string[] = message.payload?.followers ?? [];
           setFollowerIds(ids);
-          // Fetch client details for any IDs we haven't resolved yet
+          // Fetch user details for any IDs we haven't resolved yet
           ids.forEach((id) => {
             setFollowersMap((prev) => {
               if (prev[id]) return prev;
-              userService.getClientById(id)
-                .then((data) => setFollowersMap((m) => ({ ...m, [id]: data })))
-                .catch(() => {});
+              userService.getById(id)
+                .then((data) => { if (data) setFollowersMap((m) => ({ ...m, [id]: data })); })
+                .catch(() => { });
               return prev;
             });
           });
@@ -247,78 +369,40 @@ export default function RoomPage() {
           setFollowingPlayer(null);
         });
 
-        // ─── Group lifecycle listeners ────────────────────────────
-        socketClient.onGroupCreate((message) => {
-          const payload = (message.payload ?? message) as Record<string, any>;
-          const group: GroupInfo = {
-            groupId: payload.groupId,
-            groupName: payload.groupName,
-            members: [payload.creatorId],
-            creatorId: payload.creatorId,
-            x: payload.x ?? 0,
-            y: payload.y ?? 0,
-          };
-          setActiveGroup(group);
-          // Notify game to freeze player
-          if (iframeRef.current) {
-            sendMessageToIframe(iframeRef.current, "GROUP_JOINED", {
-              groupId: group.groupId,
-              x: group.x,
-              y: group.y,
-            });
-          }
+        // ─── Asset lifecycle listeners ───────────────────────────
+        // The game handles instantiating/removing asset nodes itself; here we
+        // need to:
+        //   - close the open card / viewer when the asset is deleted
+        //   - refresh the open card / viewer when likes/views change
+        socketClient.onAssetDelete((message) => {
+          const id = message.payload?.id;
+          if (!id) return;
+          setActiveCard((prev) =>
+            prev?.kind === "asset" && prev.assetId === id ? null : prev,
+          );
+          setViewingAsset((prev) => (prev && prev.assetId === id ? null : prev));
         });
-
-        socketClient.onGroupJoin((message) => {
-          const payload = (message.payload ?? message) as Record<string, any>;
-          // The joining player gets this - set them into group mode
-          // The group:update with members list follows right after
-          if (payload.clientId === client?.clientId) {
-            // We'll set the full group info from the group:update that follows
-          }
-        });
-
-        socketClient.onGroupUpdate((message) => {
-          const payload = (message.payload ?? message) as Record<string, any>;
-          const groupInfo: GroupInfo = {
-            groupId: payload.groupId,
-            groupName: payload.groupName,
-            members: payload.members ?? [],
-            x: payload.x ?? 0,
-            y: payload.y ?? 0,
-          };
-          // If we're a member of this group, update our group view
-          if (groupInfo.members.includes(client?.clientId ?? "")) {
-            setActiveGroup(groupInfo);
-            // Notify game to freeze player and position within radius
-            if (iframeRef.current) {
-              sendMessageToIframe(iframeRef.current, "GROUP_JOINED", {
-                groupId: groupInfo.groupId,
-                x: groupInfo.x,
-                y: groupInfo.y,
-              });
-            }
-          }
-          setSelectedGroupCard(null);
-        });
-
-        socketClient.onGroupLeave((message) => {
-          const payload = (message.payload ?? message) as Record<string, any>;
-          if (payload.clientId === client?.clientId) {
-            setActiveGroup(null);
-            // Notify game to unfreeze player
-            if (iframeRef.current) {
-              sendMessageToIframe(iframeRef.current, "GROUP_LEFT", {});
-            }
-          }
-        });
-
-        socketClient.onGroupDelete(() => {
-          // If we were in the deleted group, exit group view
-          setActiveGroup(null);
-          if (iframeRef.current) {
-            sendMessageToIframe(iframeRef.current, "GROUP_LEFT", {});
-          }
+        socketClient.onAssetUpdate((message) => {
+          const payload = (message.payload ?? {}) as Record<string, any>;
+          const id = payload.id;
+          if (!id) return;
+          // The asset:update payload uses the slim wire shape — flatten it
+          // back into the Asset type the UI expects.
+          const mergeAsset = <T extends Asset | AssetWithUrl>(current: T): T => ({
+            ...current,
+            type: payload.type ?? current.type,
+            caption: payload.caption ?? current.caption,
+            status: payload.status ?? current.status,
+            xpos: payload.xpos ?? payload.pos?.x ?? current.xpos,
+            ypos: payload.ypos ?? payload.pos?.y ?? current.ypos,
+            viewsCount: payload.viewsCount ?? current.viewsCount,
+            likesCount: payload.likesCount ?? current.likesCount,
+          });
+          setActiveCard((prev) => {
+            if (prev?.kind !== "asset" || prev.assetId !== id || !prev.asset) return prev;
+            return { ...prev, asset: mergeAsset(prev.asset) };
+          });
+          setViewingAsset((prev) => (prev && prev.assetId === id ? mergeAsset(prev) : prev));
         });
       } catch (err) {
         console.error("❌ React WebSocket connection failed:", err);
@@ -333,14 +417,14 @@ export default function RoomPage() {
 
     // Cleanup on unmount (e.g. browser back button) - emit leave and kill connections
     return () => {
-      if (client?.clientId && socketClient.isConnected()) {
+      if (currentUser?.userId && socketClient.isConnected()) {
         socketClient.send({
           type: "player:leave",
           payload: {
-            pid: client.clientId,
+            pid: currentUser.userId,
           },
         });
-        console.log("👋 Sent player leave message on unmount for:", client.clientId);
+        console.log("👋 Sent player leave message on unmount for:", currentUser.userId);
       }
       if (unsubscribePlayerJoin) unsubscribePlayerJoin();
       if (unsubscribePlayerLeave) unsubscribePlayerLeave();
@@ -349,14 +433,16 @@ export default function RoomPage() {
       socketClient.disconnect();
       cleanupGodotSession();
     };
-  }, [client, roomId, godotConfigSent]);
+  }, [currentUser, roomId, godotConfigSent]);
 
-  const handleFollow = (target: Client) => {
-    if (!target.clientId || !iframeRef.current) return;
-    sendMessageToIframe(iframeRef.current, "FOLLOW_PLAYER", { clientId: target.clientId });
+  // ─── Follow Handlers ───────────────────────────────────────────────
+
+  const handleFollow = (target: User) => {
+    if (!target.userId || !iframeRef.current) return;
+    sendMessageToIframe(iframeRef.current, "FOLLOW_PLAYER", { clientId: target.userId });
     setFollowingPlayer(target);
-    if (client?.clientId) {
-      socketClient.sendFollow(client.clientId, target.clientId);
+    if (currentUser?.userId) {
+      socketClient.sendFollow(currentUser.userId, target.userId);
     }
   };
 
@@ -364,54 +450,32 @@ export default function RoomPage() {
     if (iframeRef.current) {
       sendMessageToIframe(iframeRef.current, "STOP_FOLLOW", {});
     }
-    if (client?.clientId && followingPlayer?.clientId) {
-      socketClient.sendUnfollow(client.clientId, followingPlayer.clientId);
+    if (currentUser?.userId && followingPlayer?.userId) {
+      socketClient.sendUnfollow(currentUser.userId, followingPlayer.userId);
     }
     setFollowingPlayer(null);
   };
 
   const handleStopFollower = (followerId: string) => {
-    if (!client?.clientId) return;
-    socketClient.sendUnfollow(followerId, client.clientId);
+    if (!currentUser?.userId) return;
+    socketClient.sendUnfollow(followerId, currentUser.userId);
   };
 
   const handleStopAllFollowers = () => {
-    if (!client?.clientId) return;
-    socketClient.sendStopAllFollowers(client.clientId);
-  };
-
-  // ─── Group Handlers ───────────────────────────────────────────────
-  const handleCreateGroup = (groupName: string) => {
-    if (!client?.clientId) return;
-    socketClient.sendGroupCreate(client.clientId, groupName);
-    setShowCreateGroupModal(false);
-  };
-
-  const handleJoinGroup = (groupId: string) => {
-    if (!client?.clientId) return;
-    socketClient.sendGroupJoin(client.clientId, groupId);
-    setSelectedGroupCard(null);
-  };
-
-  const handleLeaveGroup = () => {
-    if (!client?.clientId || !activeGroup) return;
-    socketClient.sendGroupLeave(client.clientId, activeGroup.groupId);
-    setActiveGroup(null);
-    if (iframeRef.current) {
-      sendMessageToIframe(iframeRef.current, "GROUP_LEFT", {});
-    }
+    if (!currentUser?.userId) return;
+    socketClient.sendStopAllFollowers(currentUser.userId);
   };
 
   const handleGoBack = () => {
     // Emit player leave message before navigating
-    if (client?.clientId && socketClient.isConnected()) {
+    if (currentUser?.userId && socketClient.isConnected()) {
       socketClient.send({
         type: "player:leave",
         payload: {
-          pid: client.clientId,
+          pid: currentUser.userId,
         },
       });
-      console.log("👋 Sent player leave message for:", client.clientId);
+      console.log("👋 Sent player leave message for:", currentUser.userId);
     }
 
     // Force-close the Godot game WebSocket before navigating away
@@ -425,35 +489,26 @@ export default function RoomPage() {
     navigate("/hub");
   };
 
-  if (loading) {
-    return (
-      <div className="room-page-loading">
-        <div className="loading-spinner">
-          <p>Loading room...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="room-page-error">
         <div className="error-container">
-          <h2>Error</h2>
+          <div className="error-icon" aria-hidden="true">
+            <i className="pi pi-exclamation-triangle" />
+          </div>
+          <h2>Hub unavailable</h2>
           <p>{error}</p>
-          <Button
-            label="Go Back"
-            onClick={handleGoBack}
-            className="p-button-primary"
-          />
+          <Button icon="pi pi-arrow-left" onClick={handleGoBack}>
+            Back to hubs
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <ChatProvider>
-      <div className={`room-page ${activeGroup ? 'room-page-group' : ''}`}>
+    <ChatProvider roomId={roomId}>
+      <div className="room-page">
         {/* Godot Game container — always in DOM to preserve iframe/WebSocket */}
         <div className="room-page-container" id="godot-container">
           <iframe
@@ -467,53 +522,81 @@ export default function RoomPage() {
               border: "none",
             }}
           />
-          {/* Player card overlay (normal mode only) */}
-          {!activeGroup && selectedPlayer && <PlayerCard client={selectedPlayer} onFollow={handleFollow} />}
-          {/* Group card overlay — shown when clicking a group dialog */}
-          {!activeGroup && selectedGroupCard && (
-            <GroupCard group={selectedGroupCard} onJoin={handleJoinGroup} onClose={() => setSelectedGroupCard(null)} />
+          {/* Custom loading overlay — sits on top of the iframe while Godot
+              boots so the user sees a unified progress UI instead of the
+              default Godot splash + our "Loading room..." screen. Stays
+              mounted (with fade-out) until every stage reports done. */}
+          <GameLoadingOverlay
+            stages={loadingStages}
+            currentMessage={loadingMessage}
+            visible={!allLoaded}
+          />
+          {/* In-session loader — small toast for late-arriving LOADING_PROGRESS
+              events (scene swaps, deferred asset loads). Replaces the
+              full-screen splash for anything that happens after the initial
+              hub load completes. */}
+          <InlineLoadingToast
+            visible={showInlineLoader}
+            message={loadingMessage}
+          />
+          {/* Only one of player/asset cards is ever visible — selecting
+              another in the world replaces the previous one. */}
+          {selectedPlayer && (
+            <PlayerCard
+              user={selectedPlayer}
+              onFollow={handleFollow}
+              onClose={closeActiveCard}
+            />
+          )}
+          {selectedAssetId && (
+            <AssetCard
+              asset={selectedAsset}
+              onClose={closeActiveCard}
+              onView={(a) => setViewingAsset(a)}
+            />
+          )}
+          {/* Public chat overlay — bottom-left, fades messages upward */}
+          {currentUser?.userId && (
+            <PublicChatOverlay
+              senderId={currentUser.userId}
+              senderName={currentUser.username}
+            />
           )}
         </div>
 
-        {activeGroup ? (
-          <GroupChatView
-            group={activeGroup}
-            onLeaveGroup={handleLeaveGroup}
-          />
-        ) : (
-          <Sidebar
-            onLeaveHub={handleGoBack}
-            roomName={room?.roomName}
-            roomAdmin={room?.roomAdmin}
-            onNewGroup={() => setShowCreateGroupModal(true)}
-          />
-        )}
+        <Sidebar
+          onLeaveHub={handleGoBack}
+          roomName={room?.name}
+          roomDescription={room?.description}
+          roomAdmin={roomHost?.username ?? room?.userId}
+          roomId={roomId}
+          iframeRef={iframeRef}
+          onViewAsset={(a) => setViewingAsset(a)}
+        />
       </div>
 
-      {/* Create Group Modal */}
-      {showCreateGroupModal && (
-        <CreateGroupModal
-          onClose={() => setShowCreateGroupModal(false)}
-          onCreate={handleCreateGroup}
+      {/* Asset full-screen viewer */}
+      {viewingAsset && (
+        <AssetViewerModal
+          asset={viewingAsset}
+          onClose={() => setViewingAsset(null)}
         />
       )}
 
       {/* Floating private chat windows — stacked at bottom-right */}
-      {!activeGroup && <ChatWindowsLayer />}
+      <ChatWindowsLayer />
 
       {/* Following banner — bottom center (shown to the player who is following) */}
-      {!activeGroup && followingPlayer && (
+      {followingPlayer && (
         <FollowingBanner target={followingPlayer} onStopFollow={handleStopFollow} />
       )}
 
       {/* Followed-by banner — bottom left (shown to the player being followed) */}
-      {!activeGroup && (
-        <FollowedByBanner
-          followers={followerIds.map((id) => followersMap[id]).filter(Boolean) as Client[]}
-          onStopFollower={handleStopFollower}
-          onStopAllFollowers={handleStopAllFollowers}
-        />
-      )}
+      <FollowedByBanner
+        followers={followerIds.map((id) => followersMap[id]).filter(Boolean) as User[]}
+        onStopFollower={handleStopFollower}
+        onStopAllFollowers={handleStopAllFollowers}
+      />
     </ChatProvider>
   );
 }

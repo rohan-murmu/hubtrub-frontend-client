@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { socketClient, MESSAGE_TYPES, CHAT_SUBTYPES } from "../services/socketClient";
-import { userService } from "../services/api";
+import { socketClient, MESSAGE_TYPES, CHAT_SUBTYPES } from "@/services/socketClient";
+import { userService, conversationService } from "@/services/api";
+import { useCurrentUser } from "./UserContext";
 
 // Message in a chat
 export interface ChatMessage {
@@ -16,20 +17,31 @@ export interface PrivateChat {
   id: string; // unique chat id
   participantId: string; // the other user's ID
   participantName: string; // the other user's name
+  /** Other user's avatar catalogue key — populated when known (PlayerCard
+   *  click, or fetched lazily on the auto-create path). When absent the
+   *  Avatar component falls back to initials. */
+  participantAvatarKey?: string;
   messages: ChatMessage[];
   createdAt: number;
+  // historyLoaded flips true after the lazy fetch of past messages from the
+  // /conversation/{id}/messages endpoint completes. Used to avoid double-fetch
+  // when the window is closed and reopened.
+  historyLoaded?: boolean;
 }
 
 interface ChatContextType {
   privateChats: PrivateChat[];
   activePrivateChatId: string | null;
   setActivePrivateChatId: (id: string | null) => void;
-  createPrivateChat: (participantId: string, participantName: string) => string;
+  createPrivateChat: (participantId: string, participantName: string, participantAvatarKey?: string) => string;
   addMessageToChat: (chatId: string, message: Omit<ChatMessage, "id" | "timestamp">) => void;
   sendPrivateMessage: (chatId: string, content: string) => void;
   leavePrivateChat: (chatId: string) => void;
   getPrivateChatByParticipant: (participantId: string) => PrivateChat | undefined;
   removePrivateChat: (chatId: string) => void;
+  /** Fetch DB-stored history for a private chat and prepend it to messages.
+   *  No-op after the first call per chat. */
+  loadPrivateHistory: (chatId: string) => Promise<void>;
   // Floating chat windows
   openChatWindowIds: string[];
   openChatWindow: (chatId: string) => void;
@@ -40,24 +52,9 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-// Helper to get current client info from localStorage
-function getCurrentClient(): { clientId: string; clientUserName: string } | null {
-  try {
-    const clientData = localStorage.getItem("client");
-    if (clientData) {
-      const client = JSON.parse(clientData);
-      return {
-        clientId: client.clientId || "",
-        clientUserName: client.clientUserName || "Unknown",
-      };
-    }
-  } catch {
-    console.error("Failed to get current client");
-  }
-  return null;
-}
+export function ChatProvider({ children, roomId }: { children: ReactNode; roomId?: string }) {
+  const currentUser = useCurrentUser();
 
-export function ChatProvider({ children }: { children: ReactNode }) {
   const [privateChats, setPrivateChats] = useState<PrivateChat[]>([]);
   const [activePrivateChatId, setActivePrivateChatId] = useState<string | null>(null);
   const [openChatWindowIds, setOpenChatWindowIds] = useState<string[]>([]);
@@ -79,10 +76,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Create a new private chat
-  const createPrivateChat = useCallback((participantId: string, participantName: string): string => {
+  const createPrivateChat = useCallback((participantId: string, participantName: string, participantAvatarKey?: string): string => {
     // Check if chat already exists
     const existing = privateChats.find((chat) => chat.participantId === participantId);
     if (existing) {
+      // Backfill the avatar key if we didn't know it before.
+      if (participantAvatarKey && !existing.participantAvatarKey) {
+        setPrivateChats((prev) =>
+          prev.map((c) =>
+            c.id === existing.id ? { ...c, participantAvatarKey } : c,
+          ),
+        );
+      }
       return existing.id;
     }
 
@@ -91,6 +96,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       id: chatId,
       participantId,
       participantName,
+      participantAvatarKey,
       messages: [],
       createdAt: Date.now(),
     };
@@ -125,9 +131,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const currentClient = getCurrentClient();
-    if (!currentClient) {
-      console.error("Current client not found");
+    if (!currentUser) {
+      console.error("Current user not found");
       return;
     }
 
@@ -136,8 +141,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       type: MESSAGE_TYPES.CHAT_PRIVATE,
       payload: {
         subType: CHAT_SUBTYPES.MESSAGE,
-        senderId: currentClient.clientId,
-        senderName: currentClient.clientUserName,
+        senderId: currentUser.userId,
+        senderName: currentUser.username,
         receiverId: chat.participantId,
         content,
       },
@@ -145,42 +150,41 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     // Add to local chat immediately (optimistic update)
     addMessageToChat(chatId, {
-      senderId: currentClient.clientId,
-      senderName: currentClient.clientUserName,
+      senderId: currentUser.userId,
+      senderName: currentUser.username,
       content,
     });
 
     console.log("📤 Sent private message to:", chat.participantName);
-  }, [privateChats, addMessageToChat]);
+  }, [privateChats, addMessageToChat, currentUser]);
 
   // Leave a private chat
   const leavePrivateChat = useCallback((chatId: string) => {
     const chat = privateChats.find((c) => c.id === chatId);
     if (!chat) return;
 
-    const currentClient = getCurrentClient();
-    if (!currentClient) return;
+    if (!currentUser) return;
 
     // Send leave message to server
     socketClient.send({
       type: MESSAGE_TYPES.CHAT_PRIVATE,
       payload: {
         subType: CHAT_SUBTYPES.LEAVE,
-        senderId: currentClient.clientId,
+        senderId: currentUser.userId,
         receiverId: chat.participantId,
       },
     });
 
     // Remove chat locally
     setPrivateChats((prev) => prev.filter((c) => c.id !== chatId));
-    
+
     // Clear active chat if it was the one we left
     if (activePrivateChatId === chatId) {
       setActivePrivateChatId(null);
     }
 
     console.log("👋 Left private chat with:", chat.participantName);
-  }, [privateChats, activePrivateChatId]);
+  }, [privateChats, activePrivateChatId, currentUser]);
 
   // Get private chat by participant ID
   const getPrivateChatByParticipant = useCallback((participantId: string): PrivateChat | undefined => {
@@ -195,26 +199,70 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, [activePrivateChatId]);
 
+  // Lazy history loader. Called from PrivateChatWindow on first mount per chat.
+  // Hits two endpoints: one to resolve the conversation row, another to fetch
+  // its messages. Idempotent — historyLoaded short-circuits later calls.
+  const loadPrivateHistory = useCallback(async (chatId: string) => {
+    if (!roomId) return;
+    const chat = privateChats.find((c) => c.id === chatId);
+    if (!chat || chat.historyLoaded) return;
+    try {
+      const conv = await conversationService.getOrCreatePrivate(roomId, chat.participantId);
+      const msgs = await conversationService.getMessages(conv.convId, 100);
+      const historyMessages: ChatMessage[] = msgs.map((m) => ({
+        id: m.messageId,
+        senderId: m.senderId,
+        senderName:
+          m.senderId === currentUser?.userId
+            ? currentUser.username
+            : chat.participantName,
+        content: m.content,
+        timestamp: new Date(m.createdAt).getTime(),
+      }));
+      setPrivateChats((prev) =>
+        prev.map((c) => {
+          if (c.id !== chatId) return c;
+          // Merge: history first, then anything received via socket in the
+          // meantime. Live messages have client-side IDs (msg-<ts>-...) that
+          // never match the server UUIDs in history, so we also dedup by
+          // (senderId, content) within a 30s window. Why: the very first
+          // message into an auto-created chat was getting duplicated — once
+          // from the WS receive path and again from this lazy history fetch.
+          const seenIds = new Set(historyMessages.map((m) => m.id));
+          const live = c.messages.filter((m) => {
+            if (seenIds.has(m.id)) return false;
+            return !historyMessages.some(
+              (h) =>
+                h.senderId === m.senderId &&
+                h.content === m.content &&
+                Math.abs(h.timestamp - m.timestamp) < 30_000,
+            );
+          });
+          return { ...c, messages: [...historyMessages, ...live], historyLoaded: true };
+        }),
+      );
+    } catch (err) {
+      console.error("Failed to load private chat history:", err);
+    }
+  }, [roomId, privateChats, currentUser]);
+
   // Listen for incoming private chat messages
   useEffect(() => {
     const unsubscribe = socketClient.onChatPrivate((message) => {
       const payload = JSON.parse(JSON.stringify(message));
       if (!payload) return;
 
-      const currentClient = getCurrentClient();
-      if (!currentClient) return;
+      if (!currentUser) return;
 
       // The server sends fields at top level (senderId, receiverId, content)
       // React sends them inside payload.subType. Handle both.
       const subType = payload.subType ?? payload.payload?.subType;
       const senderId: string = payload.senderId ?? payload.payload?.senderId;
       const senderName: string = payload.senderName ?? payload.payload?.senderName ?? senderId;
-      const targetId: string = payload.receiverId ?? payload.payload?.receiverId ?? payload.recieverId;
       const content: string = payload.content ?? payload.payload?.content ?? "";
 
       // Only process messages meant for us
-      if (targetId !== currentClient.clientId) return;
-
+      if (senderId === currentUser.userId) return;
       // Treat undefined subType (incoming from server) as a regular message
       const isRegularMessage = !subType || subType === CHAT_SUBTYPES.MESSAGE;
 
@@ -238,36 +286,49 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           });
           console.log("📩 Received private message from:", senderName);
         } else {
-          // Auto-create chat for incoming message
+          // Auto-create chat for incoming message. We must seed the chat with
+          // the first message in the same setState — splitting it across a
+          // setTimeout(0) + addMessageToChat raced with React's commit, so the
+          // map() in addMessageToChat sometimes ran against the pre-insert
+          // snapshot and the message was silently dropped.
           const chatId = `private-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const firstMessage: ChatMessage = {
+            id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            senderId,
+            senderName,
+            content,
+            timestamp: Date.now(),
+          };
           const newChat: PrivateChat = {
             id: chatId,
             participantId: senderId,
             participantName: senderName,
-            messages: [],
+            messages: [firstMessage],
             createdAt: Date.now(),
           };
           setPrivateChats((prev) => [...prev, newChat]);
-          // If the server didn't send a real name (fallback = senderId), fetch it
-          if (!senderName || senderName === senderId) {
-            userService.getClientById(senderId).then((clientData) => {
-              const actualName = clientData.clientUserName || senderId;
-              setPrivateChats((prev) =>
-                prev.map((c) =>
-                  c.id === chatId ? { ...c, participantName: actualName } : c
-                )
-              );
-            }).catch(() => { /* keep ID as fallback */ });
-          }
-          // Add message and open window after chat is created
-          setTimeout(() => {
-            addMessageToChat(chatId, { senderId, senderName, content });
-            setOpenChatWindowIds((prev) => {
-              if (prev.includes(chatId)) return prev;
-              const next = [...prev, chatId];
-              return next.length > MAX_OPEN_WINDOWS ? next.slice(next.length - MAX_OPEN_WINDOWS) : next;
-            });
-          }, 0);
+          setOpenChatWindowIds((prev) => {
+            if (prev.includes(chatId)) return prev;
+            const next = [...prev, chatId];
+            return next.length > MAX_OPEN_WINDOWS ? next.slice(next.length - MAX_OPEN_WINDOWS) : next;
+          });
+          // Always look up the sender so we can populate the avatar key
+          // (and the username, if the server only sent the raw ID).
+          userService.getById(senderId).then((u) => {
+            if (!u) return;
+            const actualName = u.username || senderName || senderId;
+            setPrivateChats((prev) =>
+              prev.map((c) =>
+                c.id === chatId
+                  ? {
+                      ...c,
+                      participantName: actualName,
+                      participantAvatarKey: u.avatarKey ?? c.participantAvatarKey,
+                    }
+                  : c
+              )
+            );
+          }).catch(() => { /* keep ID as fallback */ });
           console.log("📩 Auto-created chat and received message from:", senderName);
         }
         return;
@@ -283,7 +344,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
 
     return unsubscribe;
-  }, [privateChats, addMessageToChat, removePrivateChat]);
+  }, [privateChats, addMessageToChat, removePrivateChat, currentUser]);
 
   // Track online users via player join/leave
   useEffect(() => {
@@ -319,6 +380,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         leavePrivateChat,
         getPrivateChatByParticipant,
         removePrivateChat,
+        loadPrivateHistory,
         openChatWindowIds,
         openChatWindow,
         closeChatWindow,

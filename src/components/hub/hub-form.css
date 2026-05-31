@@ -1,0 +1,130 @@
+.hub-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.hub-form__field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sx-text-muted);
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+/* ── Hub type toggle ───────────────────────────────────────────── */
+.hub-type {
+  display: inline-flex;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-md);
+  overflow: hidden;
+  background: var(--sx-bg-raised);
+}
+
+.hub-type__option {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border: 0;
+  background: transparent;
+  color: var(--sx-text-muted);
+  font-family: var(--sx-font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--sx-dur) var(--sx-ease), color var(--sx-dur) var(--sx-ease);
+}
+
+.hub-type__option + .hub-type__option {
+  border-left: 1px solid var(--sx-border);
+}
+
+.hub-type__option.is-active {
+  background: var(--sx-accent);
+  color: var(--sx-accent-text);
+}
+
+.hub-type__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hub-type__hint {
+  font-size: 0.78rem;
+  color: var(--sx-text-dim);
+  margin-top: 0.4rem;
+}
+
+/* ── Scene selector ────────────────────────────────────────────── */
+.scene-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.scene-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  background: var(--sx-bg-raised);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--sx-dur) var(--sx-ease), transform var(--sx-dur) var(--sx-ease);
+  text-align: left;
+  padding: 0;
+}
+
+.scene-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--sx-border-strong);
+}
+
+.scene-card.is-selected {
+  border-color: var(--sx-accent);
+  box-shadow: 0 0 0 3px var(--sx-accent-soft);
+}
+
+.scene-card__preview {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 30% 20%, var(--sx-accent-soft) 0%, transparent 60%),
+    linear-gradient(140deg, var(--sx-bg-elevated) 0%, var(--sx-bg-base) 100%);
+  color: var(--sx-text-muted);
+  font-size: 1.8rem;
+  overflow: hidden;
+}
+
+.scene-card__preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.scene-card__body {
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scene-card__name {
+  font-weight: 700;
+  color: var(--sx-text);
+}
+
+.scene-card__blurb {
+  font-size: 0.82rem;
+  color: var(--sx-text-muted);
+  line-height: 1.4;
+}
+
+.scene-card__explore {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}

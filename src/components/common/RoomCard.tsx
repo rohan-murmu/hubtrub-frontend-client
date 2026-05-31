@@ -1,84 +1,88 @@
-import { Card } from "primereact/card";
-import { Button } from "primereact/button";
-import { useNavigate } from "react-router-dom";
-import type { Room } from "../../types";
-import "./RoomCard.css";
+import { useNavigate } from 'react-router-dom';
+import type { Room } from '@/types';
+import { relativeTime } from '@/utils/relativeTime';
+import { findScene } from '@/utils/scenes';
+import './RoomCard.css';
 
 interface RoomCardProps {
   room: Room;
-  isAdmin: boolean;
+  /** Show edit/delete controls (My Hubs tab only). */
+  showAdmin?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export default function RoomCard({
-  room,
-  isAdmin,
-  onEdit,
-  onDelete,
-}: RoomCardProps) {
+export default function RoomCard({ room, showAdmin = false, onEdit, onDelete }: RoomCardProps) {
   const navigate = useNavigate();
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on buttons
-    if ((e.target as HTMLElement).closest("button")) {
-      return;
-    }
-    // Navigate to the room page
+    if ((e.target as HTMLElement).closest('button')) return;
     navigate(`/hub/${room.roomId}`);
   };
 
-  const footer = (
-    <>
-      {isAdmin && (
-        <div className="room-card-footer">
-          <Button
-            label=""
-            icon="pi pi-pencil"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.();
-            }}
-            className="p-button-sm p-button-info"
-          />
-          <Button
-            label=""
-            icon="pi pi-trash"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.();
-            }}
-            className="p-button-sm p-button-danger"
-          />
-        </div>
-      )}
-    </>
-  );
+  const creator = room.creatorUsername || room.userId || 'unknown';
+  const members = room.activeMembers ?? 0;
+  const scene = findScene(room.sceneKey);
 
   return (
-    <Card
-      className="room-card"
-      footer={footer}
-      onClick={handleCardClick}
-      style={{ cursor: "pointer" }}
-    >
-      <div className="room-card-image">
-        {room.roomScene ? (
-          <img src={room.roomScene} alt={room.roomName} />
-        ) : (
-          <div className="room-card-placeholder">No Scene</div>
+    <article className="room-card" onClick={handleCardClick}>
+      <div className="room-card__preview" data-scene={room.sceneKey}>
+        {scene?.image && (
+          <img
+            className="room-card__preview-img"
+            src={scene.image}
+            alt={scene.label}
+            draggable={false}
+          />
+        )}
+        <span className="room-card__scene">{scene?.label ?? room.sceneKey ?? 'world'}</span>
+        <span
+          className="room-card__members"
+          title={`${members} ${members === 1 ? 'member' : 'members'} active`}
+        >
+          <i className="pi pi-users" aria-hidden="true" />
+          {members}
+        </span>
+        {showAdmin && (
+          <div className="room-card__actions">
+            <button
+              type="button"
+              className="room-card__icon-btn"
+              aria-label="Edit hub"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit?.();
+              }}
+            >
+              <i className="pi pi-pencil" />
+            </button>
+            <button
+              type="button"
+              className="room-card__icon-btn room-card__icon-btn--danger"
+              aria-label="Delete hub"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.();
+              }}
+            >
+              <i className="pi pi-trash" />
+            </button>
+          </div>
         )}
       </div>
-      <div className="room-card-content">
-        <h3 className="room-card-title">{room.roomName}</h3>
-        <p className="room-card-meta">
-          <small>
-            By {room.roomAdmin || "Unknown"}
-            {room.roomCreatedAt &&
-              ` • ${new Date(room.roomCreatedAt).toLocaleDateString()}`}
-          </small>
+
+      <div className="room-card__body">
+        <h3 className="room-card__name">{room.name}</h3>
+        <p className="room-card__meta">
+          <span className="room-card__author">@{creator}</span>
+          {room.createdAt && (
+            <>
+              <span className="room-card__dot">·</span>
+              <span>{relativeTime(room.createdAt)}</span>
+            </>
+          )}
         </p>
       </div>
-    </Card>
+    </article>
   );
 }

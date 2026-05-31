@@ -1,57 +1,327 @@
-.welcome-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* ── Hero shell ───────────────────────────────────────────────── */
+.hero {
+  position: relative;
   min-height: 100vh;
-  padding: 1rem;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  /* warm sky gradient that peeks through behind the farthest layer */
+  background:
+    radial-gradient(120% 80% at 50% 0%, #f7d089 0%, #efb46a 40%, #cf8b4a 75%, #6b4828 100%);
+  --mx: 0;
+  --my: 0;
+  font-family: var(--sx-font);
+  cursor: default;
 }
 
-.welcome-content {
-  text-align: center;
-  color: #001234;
-}
-
-.welcome-title {
-  font-size: 4rem;
-  font-weight: 800;
-  margin: 0;
-  margin-bottom: 1rem;
-}
-
-.welcome-subtitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 3rem 0;
-  opacity: 0.9;
-  color: #001234;
-}
-
-.welcome-button {
-  padding: 0.75rem 2.5rem !important;
-  font-size: 1.1rem !important;
+/* ── Transparent header / logo ────────────────────────────────── */
+.hero-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
   background: transparent;
-  border: 2px solid #001234 !important;
-  color: #001234;
-  border-radius: 5px !important;
+  border: 0;
+  pointer-events: none;
+}
+
+.hero-beta {
+  pointer-events: auto;
+  font-family: var(--sx-font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff5dc;
+  background: rgba(42, 22, 7, 0.55);
+  border: 1px solid rgba(255, 234, 180, 0.45);
+  padding: 0.32rem 0.7rem;
+  border-radius: 4px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.hero-logo {
+  pointer-events: auto;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sx-font-display);
+  font-size: 2rem;
+  letter-spacing: 0.05em;
+  color: #2a1607;
+  text-shadow:
+    2px 2px 0 rgba(255, 255, 255, 0.35),
+    0 0 18px rgba(255, 234, 180, 0.6);
+  padding: 0.4rem 0.6rem;
+  transition: transform 200ms var(--sx-ease);
+}
+
+.hero-logo:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.hero-logo-accent {
+  color: #31c587;
+  text-shadow:
+    2px 2px 0 rgba(0, 0, 0, 0.18),
+    0 0 14px rgba(49, 197, 135, 0.45);
+}
+
+/* ── Parallax stage ───────────────────────────────────────────── */
+.hero-parallax {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.plx-layer {
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: auto 100%;
+  will-change: transform;
+  transition: transform 80ms linear;
+  transform: translate3d(
+    calc(var(--mx) * var(--depth) * -120px),
+    calc(var(--my) * var(--depth) * -50px),
+    0
+  );
+}
+
+/* Layer 5 — sky + mountains (farthest, slowest) */
+.plx-sky {
+  top: -5%;
+  height: 90%;
+  background-size: cover;
+  background-position: center top;
+  opacity: 0.96;
+}
+
+/* Layer 4 — distant silhouette trees */
+.plx-far {
+  bottom: 18%;
+  height: 60%;
+  background-size: cover;
+  opacity: 0.92;
+  filter: blur(0.4px);
+}
+
+/* Layer 3 — mid forest */
+.plx-mid {
+  bottom: 10%;
+  height: 55%;
+  background-size: cover;
+}
+
+/* Layer 2 — near forest with mushrooms */
+.plx-near {
+  bottom: 2%;
+  height: 48%;
+  background-size: cover;
+}
+
+/* Layer 1 — ground / grass tile (closest backdrop) */
+.plx-ground {
+  bottom: -2%;
+  height: 22%;
+  background-position: center bottom;
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+}
+
+/* Hubit pixel character — frontmost parallax actor */
+.plx-hubit {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  width: clamp(180px, 18vw, 320px);
+  aspect-ratio: 1 / 1;
+  transform: translate3d(
+    calc(-50% + var(--mx) * var(--depth) * -260px),
+    calc(var(--my) * var(--depth) * -80px),
+    0
+  );
+  transition: transform 60ms linear;
+  z-index: 4;
+  animation: hubit-bob 2.6s ease-in-out infinite;
+  filter: drop-shadow(0 18px 14px rgba(0, 0, 0, 0.35));
+}
+
+.plx-hubit img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  user-select: none;
+  pointer-events: none;
+}
+
+@keyframes hubit-bob {
+  0%,
+  100% {
+    margin-top: 0;
+  }
+  50% {
+    margin-top: -10px;
+  }
+}
+
+/* Soft vignette over the whole stage for text legibility */
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 50% at 50% 45%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.18) 70%, rgba(0, 0, 0, 0.42) 100%),
+    linear-gradient(180deg, rgba(20, 12, 4, 0.18) 0%, rgba(20, 12, 4, 0) 30%);
+}
+
+/* ── Hero content (centered, kept at existing position) ───────── */
+.hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 6rem 1.5rem 9rem;
+  text-align: center;
+  /* subtle counter-parallax: title drifts opposite to layers */
+  transform: translate3d(
+    calc(var(--mx) * 14px),
+    calc(var(--my) * 8px),
+    0
+  );
+  transition: transform 120ms linear;
+}
+
+.hero-title {
+  font-family: var(--sx-font-display);
+  font-size: clamp(3rem, 7.5vw, 6rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin: 0 0 1.25rem;
+  color: #fff8e7;
+  text-shadow:
+    4px 4px 0 #2a1607,
+    8px 8px 0 rgba(0, 0, 0, 0.18),
+    0 0 36px rgba(255, 220, 150, 0.45);
+}
+
+.hero-subtitle {
+  font-family: var(--sx-font);
+  font-size: clamp(1rem, 1.5vw, 1.35rem);
   font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #fff5dc;
+  margin: 0 0 2.5rem;
+  max-width: 38ch;
+  text-shadow: 0 2px 10px rgba(40, 24, 8, 0.55);
 }
 
-.welcome-button:hover {
-  background: #001234 ;
-  color: #ffffff;
+/* ── Gamified CTA button ──────────────────────────────────────── */
+.hero-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 2rem;
+  font-family: var(--sx-font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  color: #062416;
+  background: #31c587;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  /* chunky pixel-stack drop shadow */
+  box-shadow:
+    0 4px 0 0 #1c8a5b,
+    0 8px 0 0 #0c5538,
+    0 14px 24px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 120ms var(--sx-ease), box-shadow 120ms var(--sx-ease),
+    background 200ms var(--sx-ease);
 }
 
+.hero-cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #3ad898;
+  box-shadow:
+    0 6px 0 0 #1c8a5b,
+    0 10px 0 0 #0c5538,
+    0 18px 30px rgba(0, 0, 0, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+.hero-cta:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow:
+    0 0 0 0 #1c8a5b,
+    0 2px 0 0 #0c5538,
+    0 6px 12px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
+}
+
+.hero-cta:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.hero-cta-arrow {
+  display: inline-block;
+  font-size: 0.85em;
+  transform: translateY(-1px);
+  animation: arrow-nudge 1.4s ease-in-out infinite;
+}
+
+@keyframes arrow-nudge {
+  0%,
+  100% {
+    transform: translate(0, -1px);
+  }
+  50% {
+    transform: translate(4px, -1px);
+  }
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .welcome-title {
-    font-size: 2.5rem;
+  .hero-nav {
+    padding: 1rem 1.25rem;
   }
-
-  .welcome-subtitle {
-    font-size: 1.2rem;
+  .hero-logo {
+    font-size: 1.5rem;
   }
+  .hero-content {
+    padding: 5rem 1rem 7rem;
+  }
+  .plx-hubit {
+    bottom: 8%;
+    width: clamp(140px, 36vw, 220px);
+  }
+}
 
-  .welcome-button {
-    padding: 0.5rem 2rem !important;
-    font-size: 1rem !important;
+@media (prefers-reduced-motion: reduce) {
+  .plx-layer,
+  .plx-hubit,
+  .hero-content {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .hero-cta-arrow {
+    animation: none;
   }
 }

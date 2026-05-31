@@ -1,20 +1,23 @@
 .following-banner {
   position: fixed;
-  bottom: 24px;
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #1a1a2e;
-  border: 1px solid #3b3b6b;
-  border-radius: 12px;
-  padding: 10px 18px;
-  color: #e2e2f0;
-  font-size: 0.9rem;
+  background: var(--sx-bg-glass);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  padding: 8px 8px 8px 14px;
+  color: var(--sx-text);
+  font-size: 0.85rem;
+  font-family: var(--sx-font);
   z-index: 500;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  animation: banner-in 0.2s ease;
+  box-shadow: var(--sx-shadow-pop);
+  animation: banner-in 0.22s var(--sx-ease);
 }
 
 @keyframes banner-in {
@@ -29,27 +32,65 @@
 }
 
 .following-banner-label {
-  color: #c7c7e8;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.15;
 }
 
-.following-banner-label strong {
-  color: #ffffff;
+.following-banner-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sx-accent);
+}
+
+.following-banner.is-offline .following-banner-eyebrow {
+  color: var(--sx-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.following-banner-presence {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--sx-accent);
+  margin-top: 2px;
+}
+
+.following-banner.is-offline .following-banner-presence {
+  color: var(--sx-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.following-banner.is-offline {
+  border-color: rgba(255, 255, 255, 0.12);
+  opacity: 0.85;
+}
+
+.following-banner-name {
+  color: var(--sx-text);
   font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: -0.005em;
 }
 
 .following-banner-stop {
-  padding: 5px 14px;
-  background: #e74c3c;
-  border: none;
-  border-radius: 7px;
-  color: #ffffff;
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: rgba(255, 90, 95, 0.12);
+  color: var(--sx-danger);
+  border: 1px solid rgba(255, 90, 95, 0.35);
+  border-radius: var(--sx-radius-lg);
+  font-size: 0.78rem;
   font-family: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all var(--sx-dur) var(--sx-ease);
 }
 
 .following-banner-stop:hover {
-  background: #c0392b;
+  background: var(--sx-danger);
+  color: #fff;
+  border-color: var(--sx-danger);
 }

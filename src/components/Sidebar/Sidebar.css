@@ -1,80 +1,96 @@
-/* Outer sidebar wrapper — only as wide as the icon strip */
+/* ── Outer sidebar wrapper ────────────────────────────────
+   Docked to the right edge of the room layout as a flex sibling
+   of the game canvas (NOT floating). */
 .room-sidebar {
-  width: 72px;
+  width: 76px;
   height: 100%;
   position: relative;
   z-index: 100;
   flex-shrink: 0;
+  font-family: var(--sx-font);
 }
 
-/* ─── Narrow icon strip ─────────────────────────── */
+/* ── Narrow icon strip ────────────────────────────────────── */
 .sidebar-strip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 72px;
+  width: 76px;
   height: 100%;
-  background: #ffffff;
-  border-left: 1px solid #e5e7eb;
-  padding: 8px 0;
+  background: var(--sx-bg-elevated);
+  border-left: 1px solid var(--sx-border-subtle);
+  padding: 14px 0 18px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
+.sidebar-divider {
+  width: 32px;
+  height: 1px;
+  background: var(--sx-border-subtle);
+  margin: 6px 0;
+}
+
 .sidebar-icon-btn {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 100%;
-  padding: 12px 4px;
+  width: 60px;
+  padding: 10px 0;
   background: transparent;
   border: none;
+  border-radius: var(--sx-radius-md);
   cursor: pointer;
-  color: #6b7280;
+  color: var(--sx-text-muted);
   font-size: 0.68rem;
+  font-weight: 500;
   font-family: inherit;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition:
+    color var(--sx-dur) var(--sx-ease),
+    background var(--sx-dur) var(--sx-ease);
 }
 
 .sidebar-icon-btn i {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
 }
 
 .sidebar-icon-btn:hover {
-  color: #111827;
-  background: #f3f4f6;
+  color: var(--sx-text);
+  background: var(--sx-bg-hover);
 }
 
 .sidebar-icon-btn.active {
-  color: #2563eb;
-  background: #eff6ff;
+  color: var(--sx-accent);
+  background: var(--sx-accent-soft);
+}
+
+.sidebar-icon-btn.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: var(--sx-accent);
 }
 
 /* Profile button at the top */
 .profile-btn {
   margin-bottom: 4px;
-  padding: 10px 4px;
+  padding: 6px 0;
 }
 
-.profile-avatar-mini {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #e5e7eb;
-  border: 2px solid #d1d5db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #374151;
-  transition: border-color 0.15s ease;
+.profile-btn.active {
+  background: transparent;
 }
 
-.profile-btn:hover .profile-avatar-mini,
-.profile-btn.active .profile-avatar-mini {
-  border-color: #2563eb;
+.profile-btn.active::before {
+  display: none;
 }
 
 /* Spacer pushes leave-btn to bottom */
@@ -84,94 +100,78 @@
 
 /* Leave hub button */
 .leave-btn {
-  color: #ef4444 !important;
+  color: var(--sx-text-muted) !important;
 }
 
 .leave-btn:hover {
-  background: #fef2f2 !important;
-  color: #dc2626 !important;
+  background: var(--sx-danger-soft) !important;
+  color: var(--sx-danger) !important;
 }
 
-/* ─── Profile popup card ─────────────────────────── */
+/* ── Profile popup card ──────────────────────────────────── */
 .profile-popup {
   position: fixed;
-  top: 8px;
-  right: 80px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px 16px;
+  top: 14px;
+  right: 88px;
+  background: var(--sx-bg-elevated);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  padding: 22px 18px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  width: 180px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  width: 200px;
   z-index: 300;
-  animation: panel-slide-in 0.15s ease;
-}
-
-.profile-popup-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #e5e7eb;
-  border: 3px solid #d1d5db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #374151;
+  animation: sx-panel-slide-in 0.18s var(--sx-ease);
+  color: var(--sx-text);
 }
 
 .profile-popup-username {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--sx-text);
   text-align: center;
   word-break: break-word;
+  letter-spacing: 0.01em;
 }
 
-.profile-popup-edit-btn {
-  padding: 6px 0;
-  width: 100%;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-family: inherit;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  text-align: center;
+.profile-popup-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sx-accent);
 }
 
-.profile-popup-edit-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+.profile-popup-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sx-accent);
 }
 
-/* ─── Expanded side panel (chat / description) ──── */
+/* ── Expanded side panel (chat / description / asset) ──── */
 .sidebar-expanded-panel {
   position: fixed;
   top: 0;
-  right: 72px;
-  width: 300px;
+  right: 76px;
+  width: 340px;
   height: 100%;
-  background: #ffffff;
-  border-left: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
+  background: var(--sx-bg-elevated);
+  border-left: 1px solid var(--sx-border-subtle);
+  border-right: 1px solid var(--sx-border-subtle);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 200;
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
-  animation: panel-slide-in 0.18s ease;
+  animation: sx-panel-slide-in 0.2s var(--sx-ease);
+  color: var(--sx-text);
 }
 
-@keyframes panel-slide-in {
+@keyframes sx-panel-slide-in {
   from {
     opacity: 0;
     transform: translateX(12px);
@@ -182,41 +182,139 @@
   }
 }
 
-/* Description sub-panel */
+/* ── Description sub-panel ─────────────────────────────── */
 .description-panel {
-  padding: 1.25rem 1rem;
-  color: #374151;
+  padding: 22px 20px;
+  color: var(--sx-text-muted);
   overflow-y: auto;
   flex: 1;
 }
 
 .description-panel-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 0.75rem;
+  font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.14em;
+  color: var(--sx-text-dim);
 }
 
 .description-room-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--sx-text);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+
+  /* Show the full hub name — wrap long names instead of truncating. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .description-admin {
-  font-size: 0.85rem;
-  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin: 0;
+  font-size: 0.85rem;
+}
+
+.description-admin-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--sx-text-dim);
+}
+
+.description-admin-name {
+  color: var(--sx-accent);
+  font-weight: 600;
 }
 
 .description-empty {
   font-size: 0.875rem;
-  color: #9ca3af;
+  color: var(--sx-text-dim);
   margin: 0;
 }
 
+.description-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sx-border-subtle);
+}
 
+.description-body-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--sx-text-dim);
+}
 
+.description-body-text {
+  font-size: 0.88rem;
+  color: var(--sx-text);
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.description-body-text > *:first-child {
+  margin-top: 0;
+}
+.description-body-text > *:last-child {
+  margin-bottom: 0;
+}
+
+.description-body-text p {
+  margin: 0 0 0.6em;
+}
+
+.description-body-text a {
+  color: var(--sx-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.description-body-text ul,
+.description-body-text ol {
+  margin: 0 0 0.6em;
+  padding-left: 1.25em;
+}
+
+.description-body-text h1,
+.description-body-text h2,
+.description-body-text h3 {
+  margin: 0.4em 0 0.3em;
+  font-weight: 700;
+  color: var(--sx-text);
+  letter-spacing: -0.01em;
+}
+
+.description-body-text h1 {
+  font-size: 1.05rem;
+}
+.description-body-text h2 {
+  font-size: 0.98rem;
+}
+.description-body-text h3 {
+  font-size: 0.92rem;
+}
+
+.description-body-text code {
+  background: var(--sx-bg-raised);
+  border: 1px solid var(--sx-border-subtle);
+  padding: 1px 6px;
+  border-radius: var(--sx-radius-sm);
+  font-family: var(--sx-font-mono);
+  font-size: 0.82em;
+}
+
+.description-body-text blockquote {
+  margin: 0 0 0.6em;
+  padding: 4px 12px;
+  border-left: 2px solid var(--sx-accent);
+  color: var(--sx-text-muted);
+}

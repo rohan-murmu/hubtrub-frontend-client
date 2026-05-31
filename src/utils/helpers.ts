@@ -1,46 +1,4 @@
 /**
- * Token utility functions
- */
-
-export const tokenUtils = {
-  /**
-   * Get token from localStorage
-   */
-  getToken: (): string | null => {
-    return localStorage.getItem('token');
-  },
-
-  /**
-   * Set token in localStorage
-   */
-  setToken: (token: string): void => {
-    localStorage.setItem('token', token);
-  },
-
-  /**
-   * Remove token from localStorage
-   */
-  removeToken: (): void => {
-    localStorage.removeItem('token');
-  },
-
-  /**
-   * Check if token exists
-   */
-  hasToken: (): boolean => {
-    return !!localStorage.getItem('token');
-  },
-
-  /**
-   * Clear all auth data
-   */
-  clearAuth: (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  },
-};
-
-/**
  * Date utility functions
  */
 export const dateUtils = {

@@ -1,0 +1,32 @@
+.not-found {
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding-top: 2.25rem;
+  padding-bottom: 2.25rem;
+}
+
+.not-found__code {
+  font-family: var(--sx-font-display);
+  font-size: 5.5rem;
+  letter-spacing: 0.05em;
+  color: var(--sx-accent);
+  line-height: 1;
+  text-shadow: 0 0 28px var(--sx-accent-soft);
+}
+
+.not-found__title {
+  font-family: var(--sx-font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+  color: var(--sx-text);
+  margin-top: 0.25rem;
+}
+
+.not-found__msg {
+  color: var(--sx-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-width: 380px;
+  margin-bottom: 0.5rem;
+}

@@ -1,0 +1,195 @@
+/* Three-pane avatar picker — shared by SelectAvatarPage and Settings → Appearance. */
+
+.avatar-selector {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.2fr);
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  background: var(--sx-bg-elevated);
+}
+
+.avatar-selector__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 0.6rem;
+  align-content: start;
+  border: 1px solid var(--sx-border-subtle);
+  border-radius: var(--sx-radius-md);
+  background: var(--sx-bg-raised);
+  min-height: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.avatar-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-md);
+  background: #0d121b;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--sx-dur) var(--sx-ease),
+    transform var(--sx-dur) var(--sx-ease),
+    box-shadow var(--sx-dur) var(--sx-ease);
+}
+
+.avatar-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.avatar-thumb:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--sx-border-strong);
+}
+
+.avatar-thumb.is-selected {
+  border-color: var(--sx-accent);
+  box-shadow: 0 0 0 2px var(--sx-accent-soft);
+}
+
+.avatar-thumb:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.avatar-selector__right {
+  display: grid;
+  grid-template-rows: minmax(180px, 1fr) auto;
+  gap: 1rem;
+}
+
+.avatar-viewer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sx-border-subtle);
+  border-radius: var(--sx-radius-md);
+  background: #0d121b;
+  padding: 1rem;
+  min-height: 180px;
+  overflow: hidden;
+}
+
+.avatar-viewer__img {
+  max-width: 100%;
+  max-height: 240px;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.avatar-info {
+  position: relative;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  padding: 1.1rem 1.15rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  overflow: hidden;
+  box-shadow: var(--sx-shadow-inset);
+}
+
+.avatar-info::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--sx-border-strong) 50%,
+    transparent 100%);
+}
+
+.avatar-info__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.avatar-info__name {
+  font-family: var(--sx-font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--sx-text);
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.avatar-info__age {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--sx-border);
+  background: var(--sx-bg-raised);
+  border-radius: var(--sx-radius-lg);
+  color: var(--sx-text);
+  font-family: var(--sx-font-display);
+  font-size: 0.95rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.avatar-info__age-label {
+  font-family: var(--sx-font);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--sx-text-muted);
+}
+
+.avatar-info__divider {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--sx-border-strong) 50%,
+    transparent 100%);
+  margin: 0;
+}
+
+.avatar-info__about-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--sx-text-muted);
+}
+
+.avatar-info__about {
+  margin-top: 0.35rem;
+  color: var(--sx-text);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.avatar-info__empty {
+  color: var(--sx-text-muted);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 560px) {
+  .avatar-selector {
+    grid-template-columns: 1fr;
+  }
+  .avatar-selector__list {
+    max-height: 200px;
+  }
+}

@@ -1,100 +1,144 @@
 .room-card {
-  height: 100%;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.room-card-image {
-  width: 100%;
-  height: 200px;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  background: var(--sx-bg-elevated);
   overflow: hidden;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  background: #f3f4f6;
+  cursor: pointer;
+  transition: border-color var(--sx-dur) var(--sx-ease),
+    transform var(--sx-dur) var(--sx-ease), box-shadow var(--sx-dur) var(--sx-ease);
 }
 
-.room-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.room-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--sx-accent-ring);
+  box-shadow: var(--sx-shadow-card);
 }
 
-.room-card-placeholder {
-  width: 100%;
-  height: 100%;
+.room-card__preview {
+  position: relative;
+  height: 210px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f3f4f6;
-  color: #9ca3af;
-  font-weight: 500;
+  background:
+    radial-gradient(ellipse at 30% 20%, var(--sx-accent-soft) 0%, transparent 60%),
+    linear-gradient(140deg, var(--sx-bg-raised) 0%, var(--sx-bg-base) 100%);
+  border-bottom: 1px solid var(--sx-border-subtle);
+  overflow: hidden;
 }
 
-.room-card-content{
-  padding: 10px;
+.room-card__preview-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.room-card-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
+.room-card__members {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--sx-text-muted);
+  background: var(--sx-bg-overlay);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-pill);
+  padding: 0.25rem 0.6rem;
 }
 
-.room-card-meta {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.85rem;
+.room-card__members i {
+  font-size: 0.82rem;
+  color: var(--sx-accent);
 }
 
-.room-card-footer {
+.room-card__scene {
+  position: relative;
+  z-index: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sx-text);
+  background: rgba(13, 18, 27, 0.72);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-pill);
+  padding: 0.25rem 0.7rem;
+}
+
+.room-card__actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-  margin-top: auto;
-  padding: 5px;
+  gap: 6px;
+  z-index: 1;
 }
 
-.p-button-sm{
-  padding: 5px;
+.room-card__icon-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--sx-radius-md);
+  border: 1px solid var(--sx-border);
+  background: var(--sx-bg-overlay);
+  color: var(--sx-text-muted);
+  cursor: pointer;
+  transition: all var(--sx-dur) var(--sx-ease);
 }
 
-/* Dark mode */
-:global(.dark) .room-card {
-  border-color: #374151;
+.room-card__icon-btn:hover {
+  color: var(--sx-accent);
+  border-color: var(--sx-accent);
 }
 
-:global(.dark) .room-card-image {
-  background: #1f2937;
+.room-card__icon-btn--danger:hover {
+  color: var(--sx-danger);
+  border-color: var(--sx-danger);
 }
 
-:global(.dark) .room-card-placeholder {
-  background: #1f2937;
-  color: #6b7280;
+.room-card__body {
+  padding: 1.1rem 1.2rem 1.2rem;
 }
 
-:global(.dark) .room-card-title {
-  color: #f3f4f6;
+.room-card__name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--sx-text);
+  margin-bottom: 0.45rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-:global(.dark) .room-card-meta {
-  color: #9ca3af;
+.room-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--sx-text-muted);
 }
 
-:global(.dark) .room-card-footer {
-  border-color: #374151;
+.room-card__author {
+  color: var(--sx-accent);
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (max-width: 768px) {
-  .room-card-image {
-    height: 150px;
-  }
-
-  .room-card-title {
-    font-size: 1rem;
-  }
+.room-card__dot {
+  opacity: 0.6;
 }

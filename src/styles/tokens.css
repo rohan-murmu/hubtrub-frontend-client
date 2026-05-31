@@ -1,0 +1,95 @@
+/* StreamFix design tokens — single source of truth for colors, spacing,
+   radii, and shadows. The dark palette lives in :root; the light palette
+   overrides surface/border/text tokens under [data-theme="light"]. The theme
+   attribute is set on <html>, so every page (including RoomPage) follows it. */
+
+/* Pixel display font — used for the hubtrub logo and major page headings. */
+@font-face {
+  font-family: "BoldsPixels";
+  src: url("../assets/fonts/BoldsPixels.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  /* ── Surfaces ───────────────────────────────────────────────── */
+  --sx-bg-base: #07080c;
+  --sx-bg-elevated: #0d0f15;
+  --sx-bg-raised: #131720;
+  --sx-bg-overlay: rgba(13, 15, 21, 0.92);
+  --sx-bg-glass: rgba(20, 24, 33, 0.72);
+  --sx-bg-hover: rgba(255, 255, 255, 0.04);
+
+  /* ── Borders ────────────────────────────────────────────────── */
+  --sx-border-subtle: rgba(255, 255, 255, 0.06);
+  --sx-border: rgba(255, 255, 255, 0.10);
+  --sx-border-strong: rgba(255, 255, 255, 0.18);
+
+  /* ── Text ───────────────────────────────────────────────────── */
+  --sx-text: #ffffff;
+  --sx-text-muted: #9aa0a6;
+  --sx-text-dim: #6b7280;
+
+  /* ── Accent (StreamFix green) ───────────────────────────────── */
+  --sx-accent: #31C587;
+  --sx-accent-strong: #25a26f;
+  --sx-accent-soft: rgba(49, 197, 135, 0.14);
+  --sx-accent-ring: rgba(49, 197, 135, 0.35);
+  --sx-accent-glow: 0 0 24px rgba(49, 197, 135, 0.35);
+  --sx-accent-text: #062416;
+
+  /* ── Status ─────────────────────────────────────────────────── */
+  --sx-online: #31C587;
+  --sx-offline: #5a5f6b;
+  --sx-danger: #ff5a5f;
+  --sx-danger-soft: rgba(255, 90, 95, 0.12);
+  --sx-warning: #facc15;
+
+  /* ── Radii ──────────────────────────────────────────────────── */
+  --sx-radius-sm: 4px;
+  --sx-radius-md: 6px;
+  --sx-radius-lg: 10px;
+  --sx-radius-pill: 999px;
+
+  /* ── Shadows ────────────────────────────────────────────────── */
+  --sx-shadow-card: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --sx-shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --sx-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* ── Motion ─────────────────────────────────────────────────── */
+  --sx-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sx-dur: 180ms;
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --sx-font: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sx-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --sx-font-display: "BoldsPixels", "Poppins", system-ui, sans-serif;
+}
+
+/* ── Light theme overrides ──────────────────────────────────────
+   Accent green and danger/warning are intentionally shared across themes.
+   Only surfaces, borders, text, and shadows flip. */
+:root[data-theme="light"] {
+  --sx-bg-base: #eef0f4;
+  --sx-bg-elevated: #ffffff;
+  --sx-bg-raised: #f4f6f9;
+  --sx-bg-overlay: rgba(255, 255, 255, 0.92);
+  --sx-bg-glass: rgba(255, 255, 255, 0.78);
+  --sx-bg-hover: rgba(15, 23, 42, 0.05);
+
+  --sx-border-subtle: rgba(15, 23, 42, 0.07);
+  --sx-border: rgba(15, 23, 42, 0.12);
+  --sx-border-strong: rgba(15, 23, 42, 0.22);
+
+  --sx-text: #0f172a;
+  --sx-text-muted: #50565e;
+  --sx-text-dim: #80868b;
+
+  --sx-accent-text: #ffffff;
+  --sx-accent-soft: rgba(49, 197, 135, 0.16);
+  --sx-accent-glow: 0 0 20px rgba(49, 197, 135, 0.28);
+
+  --sx-shadow-card: 0 12px 40px rgba(15, 23, 42, 0.12);
+  --sx-shadow-pop: 0 8px 28px rgba(15, 23, 42, 0.16);
+  --sx-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
