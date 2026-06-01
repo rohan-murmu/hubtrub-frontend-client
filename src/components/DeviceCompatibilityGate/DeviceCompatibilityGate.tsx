@@ -1,30 +1,26 @@
 import { useEffect, useState, type ReactNode } from "react";
 import "./DeviceCompatibilityGate.css";
 
-// Allow only:
-//   • viewport ≥ 1024px
-//   • primary pointer is fine (mouse / trackpad)
-//   • real hover support
-//   • NO coarse pointer available at all (rejects touchscreen
-//     laptops, 2-in-1s with detachable keyboards, etc.)
-const COMPATIBLE_QUERY =
-  "(min-width: 1024px) and (hover: hover) and (pointer: fine) and (not (any-pointer: coarse))";
-
-// JS-side belt-and-suspenders: navigator.maxTouchPoints is the most
-// reliable signal across browsers for whether a touchscreen is
-// physically attached. Anything > 0 means the device can be poked
-// with a finger — block it.
-const isTouchCapable = (): boolean => {
-  if (typeof navigator === "undefined") return false;
-  if ((navigator.maxTouchPoints ?? 0) > 0) return true;
-  // Older WebKit fallback
-  if ("ontouchstart" in window) return true;
-  return false;
-};
+// We only want to block phones and pure-touch tablets — NOT laptops, including
+// touchscreen laptops, 2-in-1s, and desktops with a touchscreen. So the gate is
+// about "is this a big-screen / pointer-equipped device", not "is touch
+// present".
+//
+// Allow when EITHER holds (comma = logical OR in a media query):
+//   • a fine pointer exists anywhere (any-pointer: fine) — a mouse or trackpad,
+//     which every laptop/desktop has even if it also has a touchscreen. This
+//     also lets a desktop user keep working in a narrow browser window.
+//   • the viewport is ≥ 1024px wide — covers touchscreen laptops / desktop-touch
+//     where the emulated/primary pointer reports coarse and hides the fine one.
+//
+// Phones and portrait tablets have neither a fine pointer nor a wide viewport,
+// so they're blocked. A landscape tablet ≥ 1024px slips through, but that's an
+// acceptable trade vs. wrongly blocking laptops. We intentionally do NOT look at
+// maxTouchPoints, which is what was rejecting touchscreen laptops.
+const COMPATIBLE_QUERY = "(min-width: 1024px), (any-pointer: fine)";
 
 const computeCompatible = (): boolean => {
   if (typeof window === "undefined") return true;
-  if (isTouchCapable()) return false;
   return window.matchMedia(COMPATIBLE_QUERY).matches;
 };
 
