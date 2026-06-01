@@ -1,0 +1,96 @@
+.room-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  background: var(--sx-bg-elevated);
+  overflow: hidden;
+}
+
+.room-card-skeleton__preview {
+  position: relative;
+  height: 210px;
+  border-bottom: 1px solid var(--sx-border-subtle);
+  background: var(--sx-bg-raised);
+}
+
+.room-card-skeleton__body {
+  padding: 1.1rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Shared shimmer block. A moving highlight sweeps left→right across each
+   placeholder element via a translucent gradient overlay. */
+.room-card-skeleton__preview,
+.room-card-skeleton__pill,
+.room-card-skeleton__line {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-card-skeleton__preview::after,
+.room-card-skeleton__pill::after,
+.room-card-skeleton__line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--sx-bg-hover) 45%,
+    var(--sx-accent-soft) 50%,
+    var(--sx-bg-hover) 55%,
+    transparent 100%
+  );
+  animation: roomCardShimmer 1.4s var(--sx-ease) infinite;
+}
+
+@keyframes roomCardShimmer {
+  to { transform: translateX(100%); }
+}
+
+.room-card-skeleton__pill {
+  position: absolute;
+  height: 22px;
+  border-radius: var(--sx-radius-pill);
+  background: var(--sx-bg-overlay);
+}
+
+.room-card-skeleton__pill--members {
+  top: 10px;
+  left: 10px;
+  width: 56px;
+}
+
+.room-card-skeleton__pill--scene {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 96px;
+}
+
+.room-card-skeleton__line {
+  height: 14px;
+  border-radius: var(--sx-radius-sm);
+  background: var(--sx-bg-hover);
+}
+
+.room-card-skeleton__line--title {
+  width: 60%;
+  height: 18px;
+}
+
+.room-card-skeleton__line--meta {
+  width: 40%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-card-skeleton__preview::after,
+  .room-card-skeleton__pill::after,
+  .room-card-skeleton__line::after {
+    animation: none;
+  }
+}

@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import UserMenu from '@/components/ui/UserMenu';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import RoomCard from '@/components/common/RoomCard';
+import RoomCardSkeleton from '@/components/common/RoomCardSkeleton';
 import { errorMessage } from '@/utils/errorMessage';
 import { isGuest } from '@/utils/isGuest';
 import './MainPage.css';
@@ -114,7 +115,11 @@ export default function MainPage() {
           <h1 className="hub-main__title">{title}</h1>
 
           {loading && rooms === null ? (
-            <div className="hub-state">Loading hubs…</div>
+            <div className="hub-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <RoomCardSkeleton key={i} />
+              ))}
+            </div>
           ) : rooms && rooms.length > 0 ? (
             <div className="hub-grid">
               {rooms.map((room) => (
