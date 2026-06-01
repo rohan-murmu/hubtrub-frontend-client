@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { RefObject } from "react";
 import DOMPurify from "dompurify";
 import ChatTab from "./tabs/ChatTab";
 import AssetTab from "./tabs/AssetTab";
 import { useCurrentUser } from "@/context/UserContext";
+import { listenToIframeMessages } from "@/utils/godotBridge";
 import Avatar from "@/components/common/Avatar";
 import type { Asset } from "@/types";
 import "./Sidebar.css";
@@ -25,6 +26,24 @@ export default function Sidebar({ onLeaveHub, roomName, roomDescription, roomAdm
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
 
   const user = useCurrentUser();
+
+  // When the user taps "Place in world", Godot enters placement mode and
+  // announces it. On mobile the expanded panel (bottom sheet) covers the game,
+  // so close it — the user needs to see and drag the ghost into place.
+  useEffect(() => {
+    const off = listenToIframeMessages((message) => {
+      if (message?.type === "ASSET_PLACEMENT_STARTED") {
+        // Only the mobile bottom sheet covers the game; the desktop side panel
+        // doesn't, so leave it open there.
+        const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
+        if (isSmallScreen) {
+          setActivePanel(null);
+          setProfileOpen(false);
+        }
+      }
+    });
+    return off;
+  }, []);
 
   // The room description is stored as rich-text HTML produced by RichTextEditor.
   // Sanitize before rendering so we drop scripts / event handlers even if the

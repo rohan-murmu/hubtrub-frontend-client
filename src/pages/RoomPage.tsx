@@ -15,6 +15,7 @@ import PrivateChatWindow from "@/components/PrivateChatWindow/PrivateChatWindow"
 import FollowingBanner from "@/components/FollowingBanner/FollowingBanner";
 import FollowedByBanner from "@/components/FollowedByBanner/FollowedByBanner";
 import PublicChatOverlay from "@/components/PublicChatOverlay/PublicChatOverlay";
+import PlacementBar from "@/components/PlacementBar/PlacementBar";
 import GameLoadingOverlay, {
   type LoadingStage,
   type LoadingStageId,
@@ -129,6 +130,20 @@ export default function RoomPage() {
 
   // Asset full-view modal (separate from the card overlay above).
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
+
+  // Touch asset-placement: on coarse-pointer devices the Godot ghost can't
+  // follow a hover, so it's dragged with a finger and committed/cancelled from
+  // an on-screen bar instead of a click. We show that bar while a placement is
+  // in flight (Godot announces it via ASSET_PLACEMENT_STARTED).
+  const [placingAssetId, setPlacingAssetId] = useState<string | null>(null);
+  // Mirror Godot's DisplayServer.is_touchscreen_available() (touch points /
+  // ontouchstart) so the bar shows exactly when the game uses the drag-to-place
+  // ghost — including touchscreen laptops, which a coarse-pointer check misses.
+  const [isTouchDevice] = useState(
+    () =>
+      typeof navigator !== "undefined" &&
+      ((navigator.maxTouchPoints ?? 0) > 0 || "ontouchstart" in window),
+  );
 
   // Synchronously null the iframe on unmount (runs before React removes it from DOM,
   // so the ref is still valid and the Godot WebSocket gets a proper close frame).
@@ -293,6 +308,11 @@ export default function RoomPage() {
         setActiveCard(null);
       }
 
+      // Godot entered placement mode — show the touch placement bar.
+      if (message?.type === "ASSET_PLACEMENT_STARTED") {
+        setPlacingAssetId(message.payload?.assetId ?? null);
+      }
+
       // Godot finished placement — persist coords. Backend transitions the
       // DRAFT row to PLACED and broadcasts asset:create to the room, so we
       // don't need to spawn anything here ourselves.
@@ -302,12 +322,13 @@ export default function RoomPage() {
           assetService.placeAsset(assetId, Number(xpos), Number(ypos))
             .catch((err) => console.error("Failed to place asset:", err));
         }
+        setPlacingAssetId(null);
       }
 
       if (message?.type === "ASSET_PLACEMENT_CANCELLED") {
-        // No-op for now; the draft row stays in the AssetTab so the user can
-        // try again. If we add a "placement in progress" UI flag later, this
-        // is where we'd clear it.
+        // The draft row stays in the AssetTab so the user can try again; just
+        // dismiss the placement bar.
+        setPlacingAssetId(null);
       }
     });
 
@@ -574,6 +595,18 @@ export default function RoomPage() {
           onViewAsset={(a) => setViewingAsset(a)}
         />
       </div>
+
+      {/* Touch placement controls — drag the ghost in the game, then commit. */}
+      {placingAssetId && isTouchDevice && (
+        <PlacementBar
+          onCancel={() => {
+            if (iframeRef.current) {
+              sendMessageToIframe(iframeRef.current, "CANCEL_ASSET_PLACEMENT", {});
+            }
+            setPlacingAssetId(null);
+          }}
+        />
+      )}
 
       {/* Asset full-screen viewer */}
       {viewingAsset && (

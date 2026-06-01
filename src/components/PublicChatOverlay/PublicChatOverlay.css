@@ -147,25 +147,33 @@
        fixed menu. Using position:fixed makes the chat and the menu share the
        same anchor, so the pill always sits just above the menu. */
     position: fixed;
+    /* Keep it compact — a slim input pill near the left, not edge-to-edge. */
     left: 12px;
     right: 12px;
     width: auto;
+    max-width: 320px;
     bottom: calc(60px + env(safe-area-inset-bottom) + 8px);
-    gap: 8px;
+    gap: 6px;
     z-index: 60; /* above the game, below the bottom menu (z-index 250) */
   }
 
   .public-chat-messages {
-    max-height: 38vh;
-    gap: 5px;
+    max-height: 22vh;
+    gap: 4px;
   }
 
   .public-chat-message {
-    font-size: 0.8rem;
-    padding: 6px 11px;
+    font-size: 0.72rem;
+    padding: 4px 9px;
+    border-radius: var(--sx-radius-md);
+  }
+
+  .public-chat-input-pill {
+    padding: 2px 4px 2px 10px;
   }
 
   .public-chat-input {
-    font-size: 0.95rem; /* ≥16px keeps iOS Safari from zooming on focus */
+    padding: 6px 0;
+    font-size: 0.85rem;
   }
 }

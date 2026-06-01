@@ -1,0 +1,65 @@
+/* Touch asset-placement controls — floats just above the bottom app menu
+   while a placement is in flight. Sits above the public chat (z 60) but below
+   the menu (z 250). */
+.placement-bar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(60px + env(safe-area-inset-bottom) + 10px);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  background: var(--sx-bg-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius-lg);
+  box-shadow: var(--sx-shadow-card);
+  font-family: var(--sx-font);
+  animation: placement-bar-rise 0.18s var(--sx-ease);
+}
+
+@keyframes placement-bar-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.placement-bar-hint {
+  font-size: 0.82rem;
+  color: var(--sx-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.placement-bar-hint strong {
+  color: var(--sx-text);
+  font-weight: 700;
+}
+
+.placement-bar-btn {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 0;
+  border-radius: var(--sx-radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--sx-dur) var(--sx-ease),
+    border-color var(--sx-dur) var(--sx-ease);
+}
+
+.placement-bar-cancel {
+  background: var(--sx-bg-hover);
+  color: var(--sx-text);
+  border-color: var(--sx-border);
+}
+
+.placement-bar-cancel:hover {
+  border-color: var(--sx-border-strong);
+}
