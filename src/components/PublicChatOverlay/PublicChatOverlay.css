@@ -141,15 +141,18 @@
    above the fixed bottom app menu so it never covers the game or the menu. */
 @media (max-width: 768px) {
   .public-chat-overlay {
+    /* Pin to the visual viewport like the bottom menu does. On mobile browsers
+       100vh ≠ the visible height (dynamic toolbar / gesture bar), so an
+       absolutely-positioned overlay inside the game container drifts behind the
+       fixed menu. Using position:fixed makes the chat and the menu share the
+       same anchor, so the pill always sits just above the menu. */
+    position: fixed;
     left: 12px;
     right: 12px;
     width: auto;
-    /* The overlay is absolutely positioned inside .room-page-container, whose
-       height already excludes the bottom app menu (RoomPage.css pads
-       .room-page by the menu height). So a small gap here pins the input pill
-       flush just above the menu — do NOT add the menu height again. */
-    bottom: 10px;
+    bottom: calc(60px + env(safe-area-inset-bottom) + 8px);
     gap: 8px;
+    z-index: 60; /* above the game, below the bottom menu (z-index 250) */
   }
 
   .public-chat-messages {
