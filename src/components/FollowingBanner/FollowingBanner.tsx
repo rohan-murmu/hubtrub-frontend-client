@@ -14,15 +14,16 @@ export default function FollowingBanner({ target, onStopFollow }: FollowingBanne
 
   return (
     <div className={`following-banner ${isOnline ? "is-online" : "is-offline"}`}>
-      <Avatar name={target.username} avatarKey={target.avatarKey} size="sm" />
+      <Avatar name={target.username} avatarKey={target.avatarKey} size="md" />
       <span className="following-banner-label">
         <span className="following-banner-eyebrow">
-          {isOnline ? "Following user" : "User left the world"}
+          {isOnline ? "Following" : "User left the world"}
         </span>
         <strong className="following-banner-name">{target.username}</strong>
       </span>
       <button className="following-banner-stop" onClick={onStopFollow}>
         <i className="pi pi-times" />
+        <span>Unfollow</span>
       </button>
     </div>
   );

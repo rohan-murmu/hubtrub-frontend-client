@@ -245,17 +245,30 @@
   border-color: var(--sx-danger);
 }
 
-/* Small screens: the desktop left:240px offset (clears the header) would push
-   the panel off a phone screen — pull it back to the left edge and cap width. */
+/* Small screens: minimap owns the top-left and the player/asset cards own the
+   top-right, so center the follower pill/panel at the top. margin-inline:auto
+   (not translateX) keeps centering even while the panel's open animation
+   animates transform. */
 @media (max-width: 768px) {
   .followed-by-pill,
   .followed-by-panel {
-    left: 12px;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: fit-content;
     top: 12px;
   }
 
   .followed-by-panel {
     width: calc(100vw - 24px);
-    max-width: 320px;
+    max-width: 300px;
+  }
+
+  /* Icon-first: show just the eye + the count number, hide "followers watching". */
+  .followed-by-pill-text {
+    font-size: 0;
+  }
+  .followed-by-pill-text strong {
+    font-size: 0.82rem;
   }
 }

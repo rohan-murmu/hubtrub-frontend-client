@@ -10,10 +10,10 @@
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
   border: 1px solid var(--sx-border);
-  border-radius: var(--sx-radius-lg);
-  padding: 8px 8px 8px 14px;
+  border-radius: var(--sx-radius-xl, 18px);
+  padding: 12px 14px 12px 16px;
   color: var(--sx-text);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-family: var(--sx-font);
   z-index: 500;
   box-shadow: var(--sx-shadow-pop);
@@ -39,7 +39,7 @@
 }
 
 .following-banner-eyebrow {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -69,23 +69,29 @@
 .following-banner-name {
   color: var(--sx-text);
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 1rem;
   letter-spacing: -0.005em;
+  /* Don't let a long username push the unfollow button off-screen. */
+  max-width: 38vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .following-banner-stop {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
+  gap: 7px;
+  padding: 9px 16px;
   background: rgba(255, 90, 95, 0.12);
   color: var(--sx-danger);
   border: 1px solid rgba(255, 90, 95, 0.35);
   border-radius: var(--sx-radius-lg);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-family: inherit;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
   transition: all var(--sx-dur) var(--sx-ease);
 }
 
@@ -95,10 +101,30 @@
   border-color: var(--sx-danger);
 }
 
-/* Small screens: lift above the bottom app menu so it isn't hidden behind it. */
+/* Small screens: compact, icon-first — drop the eyebrow label and the
+   "Unfollow" word (keep the ✕ icon), shrink the avatar. */
 @media (max-width: 768px) {
   .following-banner {
     bottom: calc(60px + env(safe-area-inset-bottom) + 14px);
     max-width: calc(100vw - 24px);
+    gap: 9px;
+    padding: 7px 8px 7px 11px;
+  }
+  .following-banner .sx-avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .following-banner-eyebrow {
+    display: none;
+  }
+  .following-banner-name {
+    font-size: 0.88rem;
+    max-width: 46vw;
+  }
+  .following-banner-stop span {
+    display: none; /* icon-only */
+  }
+  .following-banner-stop {
+    padding: 8px 10px;
   }
 }

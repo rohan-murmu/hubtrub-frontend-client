@@ -47,8 +47,9 @@ export default function PlayerCard({ user, onFollow, onClose }: PlayerCardProps)
         <button
           className="player-card-btn player-card-btn-primary"
           onClick={handleMessage}
+          aria-label="Message"
         >
-          <i className="pi pi-send" /> Message
+          <i className="pi pi-send" /> <span className="player-card-btn-label">Message</span>
         </button>
         <button
           className="player-card-btn player-card-btn-ghost"

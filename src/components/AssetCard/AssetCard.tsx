@@ -65,8 +65,9 @@ export default function AssetCard({ asset, onClose, onView }: AssetCardProps) {
         className="asset-card-view-btn"
         onClick={() => onView(asset)}
         type="button"
+        aria-label="View"
       >
-        <i className="pi pi-external-link" /> View
+        <i className="pi pi-external-link" /> <span className="asset-card-btn-label">View</span>
       </button>
 
     </div>

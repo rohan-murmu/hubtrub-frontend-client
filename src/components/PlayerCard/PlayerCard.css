@@ -173,14 +173,62 @@
   transform: none;
 }
 
-/* Small screens: keep the card on-screen next to a smaller viewport. */
+/* Small screens: a compact, icon-only horizontal chip instead of the tall
+   card — avatar + name on the left, message/follow as icon buttons. Tap
+   elsewhere in the world to dismiss (close ✕ is hidden to save space). */
 @media (max-width: 768px) {
   .player-card {
     top: 12px;
     right: 12px;
-    left: 12px;
+    left: auto;
     width: auto;
-    max-width: 320px;
-    margin-left: auto;
+    max-width: 250px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  .player-card-close {
+    display: none;
+  }
+  /* Avatar size is an inline style on the component, so override with !important. */
+  .player-card-avatar-wrap .sx-avatar {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .player-card-identity {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    align-items: flex-start;
+    text-align: left;
+    gap: 1px;
+  }
+  .player-card-username {
+    font-size: 0.85rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .player-card-status {
+    font-size: 0.64rem;
+  }
+  .player-card-actions {
+    width: auto;
+    flex: 0 0 auto;
+    gap: 6px;
+    margin: 0;
+  }
+  .player-card-btn-label {
+    display: none; /* icon-only on mobile */
+  }
+  .player-card-btn-primary,
+  .player-card-btn-ghost {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    padding: 0;
+    flex: 0 0 auto;
   }
 }

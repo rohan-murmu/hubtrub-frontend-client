@@ -264,9 +264,11 @@
     left: 8px !important;
     right: 8px !important;
     width: auto;
-    height: min(70vh, 460px);
+    /* A little smaller, and docked flush on the bottom menu with squared-off
+       bottom corners (top stays rounded). */
+    height: min(56vh, 400px);
     bottom: calc(60px + env(safe-area-inset-bottom));
-    border-radius: var(--sx-radius-lg);
-    border-bottom: 1px solid var(--sx-border);
+    border-radius: var(--sx-radius-lg) var(--sx-radius-lg) 0 0;
+    border-bottom: none;
   }
 }

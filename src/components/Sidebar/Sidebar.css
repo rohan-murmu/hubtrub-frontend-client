@@ -401,22 +401,34 @@
     animation: sx-sheet-slide-up 0.22s var(--sx-ease);
   }
 
-  /* ── Profile popup → bottom-anchored card ── */
+  /* ── Profile popup → compact bottom-left card (near the profile button) ── */
   .profile-popup {
     top: auto;
-    right: 12px;
     left: 12px;
+    right: auto;
     bottom: calc(60px + env(safe-area-inset-bottom) + 10px);
     width: auto;
+    max-width: 240px;
     flex-direction: row;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    gap: 11px;
+    padding: 10px 13px;
     text-align: left;
+  }
+
+  /* Avatar size is an inline style on the component — shrink it on mobile. */
+  .profile-popup .sx-avatar {
+    width: 40px !important;
+    height: 40px !important;
   }
 
   .profile-popup-username {
     text-align: left;
+    font-size: 0.9rem;
+  }
+
+  .profile-popup-status {
+    font-size: 0.72rem;
   }
 }
 
