@@ -195,3 +195,23 @@
   z-index: 1;
   max-width: 80vw;
 }
+
+/* ── Small screens: dock the sidebar to the bottom as an app menu ──────
+   The sidebar becomes a horizontal bottom bar (see Sidebar.css). The game
+   container fills the remaining height above it. --room-bottom-menu-h is the
+   shared height the public-chat overlay and bottom-sheet panels anchor to. */
+@media (max-width: 768px) {
+  .room-page {
+    flex-direction: column;
+    /* The bottom menu is position:fixed, so reserve room for it + the iOS
+       home-indicator safe area so the game canvas isn't hidden behind it. */
+    --room-bottom-menu-h: 60px;
+    padding-bottom: calc(var(--room-bottom-menu-h) + env(safe-area-inset-bottom));
+  }
+
+  .room-page-container {
+    height: auto;
+    flex: 1;
+    min-height: 0;
+  }
+}

@@ -30,3 +30,12 @@
   max-width: 380px;
   margin-bottom: 0.5rem;
 }
+
+@media (max-width: 480px) {
+  .not-found__code {
+    font-size: 4rem;
+  }
+  .not-found__msg {
+    max-width: 90vw;
+  }
+}

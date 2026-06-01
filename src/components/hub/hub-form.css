@@ -128,3 +128,18 @@
   align-self: flex-start;
   margin-top: 0.25rem;
 }
+
+/* Small screens: single-column scene grid and a full-width type toggle. */
+@media (max-width: 480px) {
+  .scene-grid {
+    grid-template-columns: 1fr;
+  }
+  .hub-type {
+    display: flex;
+    width: 100%;
+  }
+  .hub-type__option {
+    flex: 1;
+    justify-content: center;
+  }
+}

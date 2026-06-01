@@ -318,3 +318,110 @@
   border-left: 2px solid var(--sx-accent);
   color: var(--sx-text-muted);
 }
+
+/* ══ Small screens: sidebar becomes a bottom app menu ════════════════════
+   The narrow right strip flips to a horizontal bar fixed to the bottom of
+   the viewport. Expanded panels (chat / asset / info) open as bottom sheets
+   that sit above the bar, and the profile popup is bottom-anchored. */
+@media (max-width: 768px) {
+  /* Height of the bar — kept in sync with RoomPage.css --room-bottom-menu-h. */
+  .room-sidebar {
+    width: 100%;
+    height: auto;
+  }
+
+  .sidebar-strip {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-around;
+    width: 100%;
+    height: 60px;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom);
+    gap: 0;
+    border-left: none;
+    border-top: 1px solid var(--sx-border-subtle);
+
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 250;
+  }
+
+  /* Each tab is an equal-width, tap-friendly column. */
+  .sidebar-icon-btn {
+    flex: 1;
+    width: auto;
+    min-height: 48px;
+    padding: 6px 0;
+    border-radius: var(--sx-radius-sm);
+    font-size: 0.62rem;
+  }
+
+  .sidebar-icon-btn i {
+    font-size: 1.15rem;
+  }
+
+  /* Active indicator moves from the left edge to the top edge. */
+  .sidebar-icon-btn.active::before {
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 22px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+  }
+
+  /* The vertical divider and the flex spacer don't make sense in a row. */
+  .sidebar-divider,
+  .sidebar-spacer {
+    display: none;
+  }
+
+  /* ── Expanded panel → bottom sheet ── */
+  .sidebar-expanded-panel {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    width: 100%;
+    height: auto;
+    max-height: 65vh;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid var(--sx-border-subtle);
+    border-top-left-radius: var(--sx-radius-lg);
+    border-top-right-radius: var(--sx-radius-lg);
+    animation: sx-sheet-slide-up 0.22s var(--sx-ease);
+  }
+
+  /* ── Profile popup → bottom-anchored card ── */
+  .profile-popup {
+    top: auto;
+    right: 12px;
+    left: 12px;
+    bottom: calc(60px + env(safe-area-inset-bottom) + 10px);
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    text-align: left;
+  }
+
+  .profile-popup-username {
+    text-align: left;
+  }
+}
+
+@keyframes sx-sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

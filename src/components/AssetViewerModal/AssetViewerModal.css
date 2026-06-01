@@ -267,3 +267,24 @@
   background: var(--sx-accent);
   box-shadow: 0 0 8px var(--sx-accent-ring);
 }
+
+/* Small screens: let the viewer use the full width and keep header/footer
+   controls reachable; shrink the slider nav so it doesn't cover the media. */
+@media (max-width: 768px) {
+  .asset-viewer-overlay {
+    padding: 12px;
+  }
+
+  .asset-viewer-frame {
+    max-width: 100%;
+    max-height: 90vh;
+  }
+
+  .asset-viewer-slider-nav {
+    width: 34px;
+    height: 34px;
+  }
+
+  .asset-viewer-slider-nav.prev { left: 8px; }
+  .asset-viewer-slider-nav.next { right: 8px; }
+}

@@ -255,3 +255,18 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+
+/* Small screens: the horizontal right-offset stacking (set inline in JS) would
+   run off a phone screen — pin each window full-width above the bottom menu.
+   Stacked windows overlap, so the most-recently-opened (last) one is on top. */
+@media (max-width: 768px) {
+  .pcw-window {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto;
+    height: min(70vh, 460px);
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    border-radius: var(--sx-radius-lg);
+    border-bottom: 1px solid var(--sx-border);
+  }
+}

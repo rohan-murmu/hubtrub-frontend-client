@@ -17,7 +17,6 @@ import RoomPage from './pages/RoomPage';
 import ExplorePage from './pages/ExplorePage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import DeviceCompatibilityGate from './components/DeviceCompatibilityGate/DeviceCompatibilityGate';
 import ReviewGate from './components/ReviewPopup/ReviewGate';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -26,10 +25,9 @@ function App() {
   return (
     <PrimeReactProvider>
       <ThemeProvider>
-        <DeviceCompatibilityGate>
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
                 <Route path="/" element={<WelcomeScreen />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/action" element={<AuthActionPage />} />
@@ -98,11 +96,10 @@ function App() {
                   }
                 />
                 <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-              <ReviewGate />
-            </AuthProvider>
-          </BrowserRouter>
-        </DeviceCompatibilityGate>
+            </Routes>
+            <ReviewGate />
+          </AuthProvider>
+        </BrowserRouter>
       </ThemeProvider>
     </PrimeReactProvider>
   );

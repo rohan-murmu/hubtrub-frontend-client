@@ -75,10 +75,31 @@
 }
 
 @media (max-width: 720px) {
+  /* Stack the left nav above the content as a horizontal, scrollable tab row. */
+  .hub-layout {
+    flex-direction: column;
+  }
   .hub-sidebar {
-    width: 160px;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--sx-border-subtle);
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+  }
+  .hub-sidebar__tab {
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .hub-main {
     padding: 1.25rem 1rem;
+  }
+  /* One card per row so 360px-min cards never overflow a phone viewport. */
+  .hub-grid {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
   }
 }

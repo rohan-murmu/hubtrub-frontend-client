@@ -94,3 +94,11 @@
   color: #fff;
   border-color: var(--sx-danger);
 }
+
+/* Small screens: lift above the bottom app menu so it isn't hidden behind it. */
+@media (max-width: 768px) {
+  .following-banner {
+    bottom: calc(60px + env(safe-area-inset-bottom) + 14px);
+    max-width: calc(100vw - 24px);
+  }
+}

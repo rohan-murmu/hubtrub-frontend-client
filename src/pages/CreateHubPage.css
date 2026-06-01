@@ -84,3 +84,22 @@
   color: var(--sx-text-muted);
   font-size: 0.88rem;
 }
+
+/* Small screens: tighten padding and let the footer buttons share the row. */
+@media (max-width: 480px) {
+  .hub-page-wrap {
+    padding: 1.25rem 0.75rem;
+  }
+  .hub-page-card {
+    padding: 1.25rem 1rem;
+  }
+  .hub-page-title {
+    font-size: 1.35rem;
+  }
+  .hub-page-foot {
+    gap: 0.5rem;
+  }
+  .hub-page-foot .sx-btn {
+    flex: 1;
+  }
+}

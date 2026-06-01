@@ -244,3 +244,18 @@
   color: #fff;
   border-color: var(--sx-danger);
 }
+
+/* Small screens: the desktop left:240px offset (clears the header) would push
+   the panel off a phone screen — pull it back to the left edge and cap width. */
+@media (max-width: 768px) {
+  .followed-by-pill,
+  .followed-by-panel {
+    left: 12px;
+    top: 12px;
+  }
+
+  .followed-by-panel {
+    width: calc(100vw - 24px);
+    max-width: 320px;
+  }
+}

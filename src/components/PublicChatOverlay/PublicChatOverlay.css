@@ -135,3 +135,34 @@
 .public-chat-emoji .emoji-picker-trigger:hover {
   color: var(--sx-accent);
 }
+
+/* ── Small screens: compact, full-width bar lifted above the bottom menu ──
+   On phones the overlay spans the width (minus a small gutter) and sits just
+   above the fixed bottom app menu so it never covers the game or the menu. */
+@media (max-width: 768px) {
+  .public-chat-overlay {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    /* The overlay is absolutely positioned inside .room-page-container, whose
+       height already excludes the bottom app menu (RoomPage.css pads
+       .room-page by the menu height). So a small gap here pins the input pill
+       flush just above the menu — do NOT add the menu height again. */
+    bottom: 10px;
+    gap: 8px;
+  }
+
+  .public-chat-messages {
+    max-height: 38vh;
+    gap: 5px;
+  }
+
+  .public-chat-message {
+    font-size: 0.8rem;
+    padding: 6px 11px;
+  }
+
+  .public-chat-input {
+    font-size: 0.95rem; /* ≥16px keeps iOS Safari from zooming on focus */
+  }
+}

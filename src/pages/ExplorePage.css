@@ -78,3 +78,14 @@
     transform: rotate(360deg);
   }
 }
+
+/* Small screens: tighten the top bar; the iframe already fills the stage. */
+@media (max-width: 480px) {
+  .explore-bar {
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .explore-bar__title {
+    font-size: 0.85rem;
+  }
+}

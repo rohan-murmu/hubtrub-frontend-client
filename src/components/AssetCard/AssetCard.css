@@ -191,3 +191,15 @@
     background-position: -200% 0;
   }
 }
+
+/* Small screens: keep the card on-screen next to a smaller viewport. */
+@media (max-width: 768px) {
+  .asset-card {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: 320px;
+    margin-left: auto;
+  }
+}
