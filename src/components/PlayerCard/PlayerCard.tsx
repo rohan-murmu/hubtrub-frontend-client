@@ -4,13 +4,41 @@ import Avatar from "@/components/common/Avatar";
 import "./PlayerCard.css";
 
 interface PlayerCardProps {
-  user: User;
+  user: User | null;
   onFollow?: (user: User) => void;
   onClose: () => void;
 }
 
 export default function PlayerCard({ user, onFollow, onClose }: PlayerCardProps) {
   const { createPrivateChat, openChatWindow, onlineUserIds } = useChat();
+
+  // While the user details are still loading, render a skeleton shell that
+  // matches the loaded card's footprint (tall on desktop, compact chip on
+  // mobile) so the layout doesn't jump when data arrives.
+  if (!user) {
+    return (
+      <div className="player-card">
+        <button className="player-card-close" onClick={onClose} aria-label="Close">
+          <i className="pi pi-times" />
+        </button>
+
+        <div className="player-card-avatar-wrap">
+          <div className="player-card-skeleton player-card-skeleton-avatar" />
+        </div>
+
+        <div className="player-card-identity">
+          <div className="player-card-skeleton player-card-skeleton-name" />
+          <div className="player-card-skeleton player-card-skeleton-status" />
+        </div>
+
+        <div className="player-card-actions">
+          <div className="player-card-skeleton player-card-skeleton-btn player-card-skeleton-btn-primary" />
+          <div className="player-card-skeleton player-card-skeleton-btn player-card-skeleton-btn-ghost" />
+        </div>
+      </div>
+    );
+  }
+
   const isOnline = onlineUserIds.includes(user.userId);
 
   const handleMessage = () => {

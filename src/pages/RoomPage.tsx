@@ -115,12 +115,29 @@ export default function RoomPage() {
   // visible at a time, so we track which kind is active and clear the others
   // whenever a new one is selected.
   type ActiveCard =
-    | { kind: "player"; user: User }
+    | { kind: "player"; playerId: string; user: User | null }
     | { kind: "asset"; assetId: string; asset: AssetWithUrl | null }
     | null;
   const [activeCard, setActiveCard] = useState<ActiveCard>(null);
   const closeActiveCard = () => setActiveCard(null);
+  // Show the player card immediately in a loading (skeleton) state, then fill in
+  // the user details once the API call returns — mirrors the asset card flow so
+  // selecting a player gives instant feedback instead of a blank pause.
+  const showPlayerCard = (playerId: string) => {
+    setActiveCard({ kind: "player", playerId, user: null });
+    userService.getById(playerId)
+      .then((data) => {
+        if (!data) return;
+        setActiveCard((prev) =>
+          prev && prev.kind === "player" && prev.playerId === playerId
+            ? { ...prev, user: data }
+            : prev,
+        );
+      })
+      .catch((err) => console.error("Failed to fetch selected player:", err));
+  };
   const selectedPlayer = activeCard?.kind === "player" ? activeCard.user : null;
+  const selectedPlayerId = activeCard?.kind === "player" ? activeCard.playerId : null;
   const selectedAsset = activeCard?.kind === "asset" ? activeCard.asset : null;
   const selectedAssetId = activeCard?.kind === "asset" ? activeCard.assetId : null;
 
@@ -270,20 +287,12 @@ export default function RoomPage() {
       if (message?.type === "PLAYER_CLICKED") {
         const clickedClientId = message.payload?.clientId;
         console.log("👆 RoomPage received PLAYER_CLICKED:", clickedClientId);
-        if (clickedClientId) {
-          userService.getById(clickedClientId)
-            .then((data) => { if (data) setActiveCard({ kind: "player", user: data }); })
-            .catch((err) => console.error("Failed to fetch clicked player:", err));
-        }
+        if (clickedClientId) showPlayerCard(clickedClientId);
       }
 
       if (message?.type === "OBJECT_SELECTED" && message.payload?.objectType === "player") {
         const objectId = message.payload?.objectId;
-        if (objectId) {
-          userService.getById(objectId)
-            .then((data) => { if (data) setActiveCard({ kind: "player", user: data }); })
-            .catch((err) => console.error("Failed to fetch selected player:", err));
-        }
+        if (objectId) showPlayerCard(objectId);
       }
 
       if (message?.type === "OBJECT_SELECTED" && message.payload?.objectType === "asset") {
@@ -562,7 +571,7 @@ export default function RoomPage() {
           />
           {/* Only one of player/asset cards is ever visible — selecting
               another in the world replaces the previous one. */}
-          {selectedPlayer && (
+          {selectedPlayerId && (
             <PlayerCard
               user={selectedPlayer}
               onFollow={handleFollow}

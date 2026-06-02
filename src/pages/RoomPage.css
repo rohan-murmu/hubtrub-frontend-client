@@ -23,6 +23,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  /* Game surface: route all touch gestures to the game / overlays instead of
+     letting the browser pan or pinch-zoom the page. Scoped to the game area so
+     the sidebar's own scroll areas keep normal touch behaviour. */
+  touch-action: none;
 }
 
 /* Godot Canvas styling */
