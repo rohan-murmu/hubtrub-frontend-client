@@ -4,6 +4,7 @@
 export const MESSAGE_TYPES = {
   PLAYER_JOIN: "player:join",
   PLAYER_LEAVE: "player:leave",
+  ROOM_FULL: "room:full",
   PLAYER_FOLLOW: "player:follow",
   PLAYER_UNFOLLOW: "player:unfollow",
   PLAYER_STOP_ALL_FOLLOWERS: "player:stop_all_followers",
@@ -43,6 +44,12 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY_MS = 2000;
 
+// Set when the server tells us the room is full (room:full). The server closes
+// the socket right after, and that close looks "abnormal" — without this flag
+// onclose would dutifully try to reconnect 5×, hammering a room we already know
+// has no room for us. Reset on every fresh connect().
+let suppressReconnect = false;
+
 // Message listeners
 const listeners: Record<string, MessageListener[]> = {};
 
@@ -80,6 +87,7 @@ export const socketClient = {
 
     return new Promise<void>((resolve, reject) => {
       isConnecting = true;
+      suppressReconnect = false; // fresh attempt — allow reconnects again
       const wsUrl = `${WS_URL}/ws?roomId=${encodeURIComponent(roomId)}&type=ui`;
       console.log(`🔗 Connecting to WebSocket: ${wsUrl}`);
 
@@ -103,7 +111,9 @@ export const socketClient = {
           console.log(`📴 WebSocket closed (code: ${ev.code}, reason: ${ev.reason})`);
           isConnecting = false;
 
-          if (ev.code !== 1000 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          if (suppressReconnect) {
+            console.log("🚫 Room full — not reconnecting");
+          } else if (ev.code !== 1000 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             reconnectAttempts++;
             console.log(
               `🔄 Attempting to reconnect (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${RECONNECT_DELAY_MS}ms...`
@@ -122,6 +132,13 @@ export const socketClient = {
           try {
             const message: SocketMessage = JSON.parse(event.data);
             console.log(`📥 Message received (${message.type}):`, message);
+
+            // The room is full: the server closes us right after this frame, so
+            // mark the close as expected to stop the reconnect loop before the
+            // close handler runs.
+            if (message.type === MESSAGE_TYPES.ROOM_FULL) {
+              suppressReconnect = true;
+            }
 
             // Emit message to listeners
             emitMessage(message.type, message);
@@ -166,6 +183,13 @@ export const socketClient = {
    */
   onPlayerLeave(callback: (message: SocketMessage) => void): () => void {
     return this.on(MESSAGE_TYPES.PLAYER_LEAVE, callback);
+  },
+
+  /**
+   * Listen for the room:full notice (server refused the join — room at capacity)
+   */
+  onRoomFull(callback: (message: SocketMessage) => void): () => void {
+    return this.on(MESSAGE_TYPES.ROOM_FULL, callback);
   },
 
   /**

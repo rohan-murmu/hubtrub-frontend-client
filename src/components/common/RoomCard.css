@@ -60,6 +60,46 @@
   color: var(--sx-accent);
 }
 
+/* ─── Full-room state ─────────────────────────────────────────────────── */
+/* A full hub can't be joined: drop the hover lift + pointer, dim it slightly,
+   and surface a clear "Full" badge so it's obvious at a glance. */
+.room-card--full {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.room-card--full:hover {
+  transform: none;
+  border-color: var(--sx-border);
+  box-shadow: none;
+}
+
+/* Tint the member pill red once at capacity. */
+.room-card__members--full {
+  color: #fff;
+  background: rgba(220, 38, 38, 0.85);
+  border-color: rgba(220, 38, 38, 0.95);
+}
+
+.room-card__members--full i {
+  color: #fff;
+}
+
+.room-card__full-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.92);
+  border-radius: var(--sx-radius-pill);
+  padding: 0.22rem 0.6rem;
+}
+
 .room-card__scene {
   position: relative;
   z-index: 1;

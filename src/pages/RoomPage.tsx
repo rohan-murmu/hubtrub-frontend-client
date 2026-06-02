@@ -73,6 +73,9 @@ export default function RoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [roomHost, setRoomHost] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Set when the server refuses the join with room:full. Renders a dedicated
+  // "hub is full" screen instead of the generic error one.
+  const [roomFull, setRoomFull] = useState(false);
   const [godotConfigSent, setGodotConfigSent] = useState(false);
 
   // ─── Loading-stage tracking ──────────────────────────────────────────
@@ -354,6 +357,17 @@ export default function RoomPage() {
     let unsubscribePlayerLeave: (() => void) | undefined;
     let unsubscribeError: (() => void) | undefined;
 
+    // Registered BEFORE connect so we can't miss the room:full frame, which the
+    // server sends immediately after upgrade and then closes. On it we show the
+    // dedicated full-hub screen and tear the socket down (reconnect is already
+    // suppressed inside socketClient).
+    const unsubscribeRoomFull = socketClient.onRoomFull(() => {
+      console.warn("🚪 Room is full — refused join");
+      setRoomFull(true);
+      socketConnectedRef.current = false;
+      socketClient.disconnect();
+    });
+
     const connectToSocket = async () => {
       try {
         console.log("🔗 Attempting React WebSocket connection...");
@@ -459,6 +473,7 @@ export default function RoomPage() {
       if (unsubscribePlayerJoin) unsubscribePlayerJoin();
       if (unsubscribePlayerLeave) unsubscribePlayerLeave();
       if (unsubscribeError) unsubscribeError();
+      unsubscribeRoomFull();
       socketConnectedRef.current = false;
       socketClient.disconnect();
       cleanupGodotSession();
@@ -518,6 +533,26 @@ export default function RoomPage() {
     socketClient.disconnect();
     navigate("/hub");
   };
+
+  if (roomFull) {
+    return (
+      <div className="room-page-error">
+        <div className="error-container">
+          <div className="error-icon" aria-hidden="true">
+            <i className="pi pi-users" />
+          </div>
+          <h2>This hub is full</h2>
+          <p>
+            {room?.name ? `“${room.name}” has` : "This hub has"} reached its
+            member limit. Try again in a bit, or hop into another hub.
+          </p>
+          <Button icon="pi pi-arrow-left" onClick={handleGoBack}>
+            Back to hubs
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (

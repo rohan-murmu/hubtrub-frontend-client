@@ -30,6 +30,10 @@ export interface Room {
   creatorAvatarKey?: string;
   /** Live count of users currently in the hub (read responses only). */
   activeMembers?: number;
+  /** Max distinct users the hub allows (read responses only). */
+  capacity?: number;
+  /** True when activeMembers has reached capacity (read responses only). */
+  isFull?: boolean;
 }
 
 export interface ErrorResponse {

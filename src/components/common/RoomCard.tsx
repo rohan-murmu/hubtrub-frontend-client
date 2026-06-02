@@ -15,17 +15,34 @@ interface RoomCardProps {
 export default function RoomCard({ room, showAdmin = false, onEdit, onDelete }: RoomCardProps) {
   const navigate = useNavigate();
 
+  const creator = room.creatorUsername || room.userId || 'unknown';
+  const members = room.activeMembers ?? 0;
+  const capacity = room.capacity;
+  // Prefer the server's isFull flag; fall back to count >= capacity if only the
+  // raw numbers came through.
+  const isFull = room.isFull ?? (capacity != null && members >= capacity);
+  const scene = findScene(room.sceneKey);
+
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
+    // Block the join when the hub is full — the WebSocket would only be
+    // refused server-side anyway, so we stop the user before the dead end.
+    if (isFull) return;
     navigate(`/hub/${room.roomId}`);
   };
 
-  const creator = room.creatorUsername || room.userId || 'unknown';
-  const members = room.activeMembers ?? 0;
-  const scene = findScene(room.sceneKey);
+  // Show "N / capacity" when we know the cap, otherwise just the live count.
+  const membersLabel = capacity != null ? `${members} / ${capacity}` : `${members}`;
+  const membersTitle = isFull
+    ? `Hub is full (${members}/${capacity})`
+    : `${members} ${members === 1 ? 'member' : 'members'} active`;
 
   return (
-    <article className="room-card" onClick={handleCardClick}>
+    <article
+      className={`room-card${isFull ? ' room-card--full' : ''}`}
+      onClick={handleCardClick}
+      aria-disabled={isFull}
+    >
       <div className="room-card__preview" data-scene={room.sceneKey}>
         {scene?.image && (
           <img
@@ -36,12 +53,13 @@ export default function RoomCard({ room, showAdmin = false, onEdit, onDelete }: 
           />
         )}
         <span className="room-card__scene">{scene?.label ?? room.sceneKey ?? 'world'}</span>
+        {isFull && <span className="room-card__full-badge">Full</span>}
         <span
-          className="room-card__members"
-          title={`${members} ${members === 1 ? 'member' : 'members'} active`}
+          className={`room-card__members${isFull ? ' room-card__members--full' : ''}`}
+          title={membersTitle}
         >
           <i className="pi pi-users" aria-hidden="true" />
-          {members}
+          {membersLabel}
         </span>
         {showAdmin && (
           <div className="room-card__actions">
