@@ -23,10 +23,23 @@ export interface PrivateChat {
   participantAvatarKey?: string;
   messages: ChatMessage[];
   createdAt: number;
-  // historyLoaded flips true after the lazy fetch of past messages from the
-  // /conversation/{id}/messages endpoint completes. Used to avoid double-fetch
-  // when the window is closed and reopened.
-  historyLoaded?: boolean;
+  // ─── Paginated history ────────────────────────────────────────────────
+  // Previous messages are NOT fetched on open. The user pulls them in a page
+  // at a time via the "Load previous chats" button (and again as they scroll
+  // up). These fields track that pagination state per chat.
+  //
+  // convId         — resolved conversation row id, cached after the first page.
+  // oldestHistoryAt — timestamp of the oldest DB message loaded so far; used as
+  //                   the `before` cursor for the next page.
+  // hasMoreHistory  — false once a page comes back smaller than the page size,
+  //                   meaning there's nothing older left to load. undefined
+  //                   means "not yet checked" (button still shown).
+  // historyLoading  — a page fetch is in flight (disables the button / shows a
+  //                   spinner).
+  convId?: string;
+  oldestHistoryAt?: number;
+  hasMoreHistory?: boolean;
+  historyLoading?: boolean;
 }
 
 interface ChatContextType {
@@ -39,9 +52,11 @@ interface ChatContextType {
   leavePrivateChat: (chatId: string) => void;
   getPrivateChatByParticipant: (participantId: string) => PrivateChat | undefined;
   removePrivateChat: (chatId: string) => void;
-  /** Fetch DB-stored history for a private chat and prepend it to messages.
-   *  No-op after the first call per chat. */
-  loadPrivateHistory: (chatId: string) => Promise<void>;
+  /** Fetch the next older page of DB-stored history for a private chat and
+   *  prepend it. Called from the "Load previous chats" button — there is no
+   *  automatic load on open. No-op while a fetch is in flight or once the
+   *  start of history has been reached. */
+  loadOlderMessages: (chatId: string) => Promise<void>;
   // Floating chat windows
   openChatWindowIds: string[];
   openChatWindow: (chatId: string) => void;
@@ -49,6 +64,9 @@ interface ChatContextType {
   // Online user tracking
   onlineUserIds: string[];
 }
+
+// How many older messages to pull per "Load previous chats" click.
+const HISTORY_PAGE_SIZE = 20;
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -199,16 +217,34 @@ export function ChatProvider({ children, roomId }: { children: ReactNode; roomId
     }
   }, [activePrivateChatId]);
 
-  // Lazy history loader. Called from PrivateChatWindow on first mount per chat.
-  // Hits two endpoints: one to resolve the conversation row, another to fetch
-  // its messages. Idempotent — historyLoaded short-circuits later calls.
-  const loadPrivateHistory = useCallback(async (chatId: string) => {
+  // Paginated history loader. Fetches the next older page (relative to the
+  // oldest message already loaded) and prepends it. Triggered explicitly by the
+  // "Load previous chats" button — nothing is fetched automatically on open.
+  const loadOlderMessages = useCallback(async (chatId: string) => {
     if (!roomId) return;
     const chat = privateChats.find((c) => c.id === chatId);
-    if (!chat || chat.historyLoaded) return;
+    // Skip if already fetching or if we've reached the start of history.
+    if (!chat || chat.historyLoading || chat.hasMoreHistory === false) return;
+
+    setPrivateChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, historyLoading: true } : c)),
+    );
+
     try {
-      const conv = await conversationService.getOrCreatePrivate(roomId, chat.participantId);
-      const msgs = await conversationService.getMessages(conv.convId, 100);
+      // Resolve and cache the conversation row id (only needed once per chat).
+      let convId = chat.convId;
+      if (!convId) {
+        const conv = await conversationService.getOrCreatePrivate(roomId, chat.participantId);
+        convId = conv.convId;
+      }
+
+      // First page: most-recent messages (no cursor). Subsequent pages: strictly
+      // older than the oldest message we've loaded so far.
+      const before = chat.oldestHistoryAt
+        ? new Date(chat.oldestHistoryAt).toISOString()
+        : undefined;
+      const msgs = await conversationService.getMessages(convId, HISTORY_PAGE_SIZE, before);
+
       const historyMessages: ChatMessage[] = msgs.map((m) => ({
         id: m.messageId,
         senderId: m.senderId,
@@ -219,30 +255,43 @@ export function ChatProvider({ children, roomId }: { children: ReactNode; roomId
         content: m.content,
         timestamp: new Date(m.createdAt).getTime(),
       }));
+
       setPrivateChats((prev) =>
         prev.map((c) => {
           if (c.id !== chatId) return c;
-          // Merge: history first, then anything received via socket in the
-          // meantime. Live messages have client-side IDs (msg-<ts>-...) that
-          // never match the server UUIDs in history, so we also dedup by
-          // (senderId, content) within a 30s window. Why: the very first
-          // message into an auto-created chat was getting duplicated — once
-          // from the WS receive path and again from this lazy history fetch.
-          const seenIds = new Set(historyMessages.map((m) => m.id));
-          const live = c.messages.filter((m) => {
-            if (seenIds.has(m.id)) return false;
-            return !historyMessages.some(
-              (h) =>
-                h.senderId === m.senderId &&
-                h.content === m.content &&
-                Math.abs(h.timestamp - m.timestamp) < 30_000,
+          // Dedup against everything already in the chat. Live messages carry
+          // client-side IDs (msg-<ts>-...) that never match server UUIDs, so we
+          // also match on (senderId, content) within a 30s window to catch the
+          // page overlapping optimistic/live messages already on screen.
+          const seenIds = new Set(c.messages.map((m) => m.id));
+          const fresh = historyMessages.filter((h) => {
+            if (seenIds.has(h.id)) return false;
+            return !c.messages.some(
+              (m) =>
+                m.senderId === h.senderId &&
+                m.content === h.content &&
+                Math.abs(m.timestamp - h.timestamp) < 30_000,
             );
           });
-          return { ...c, messages: [...historyMessages, ...live], historyLoaded: true };
+          // msgs come back ascending (oldest → newest), so msgs[0] is the new
+          // oldest. A short page means we've hit the beginning of history.
+          const newOldest =
+            msgs.length > 0 ? new Date(msgs[0].createdAt).getTime() : c.oldestHistoryAt;
+          return {
+            ...c,
+            messages: [...fresh, ...c.messages],
+            convId,
+            oldestHistoryAt: newOldest,
+            hasMoreHistory: msgs.length === HISTORY_PAGE_SIZE,
+            historyLoading: false,
+          };
         }),
       );
     } catch (err) {
-      console.error("Failed to load private chat history:", err);
+      console.error("Failed to load older private messages:", err);
+      setPrivateChats((prev) =>
+        prev.map((c) => (c.id === chatId ? { ...c, historyLoading: false } : c)),
+      );
     }
   }, [roomId, privateChats, currentUser]);
 
@@ -380,7 +429,7 @@ export function ChatProvider({ children, roomId }: { children: ReactNode; roomId
         leavePrivateChat,
         getPrivateChatByParticipant,
         removePrivateChat,
-        loadPrivateHistory,
+        loadOlderMessages,
         openChatWindowIds,
         openChatWindow,
         closeChatWindow,

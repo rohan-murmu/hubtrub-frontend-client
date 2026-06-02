@@ -263,9 +263,14 @@
   .player-card-username {
     font-size: 0.85rem;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    /* Show the full username no matter how long — wrap onto multiple lines
+       within the identity column rather than truncating with an ellipsis. */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.2;
   }
   .player-card-status {
     font-size: 0.64rem;

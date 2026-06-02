@@ -72,10 +72,12 @@ export default function Sidebar({ onLeaveHub, roomName, roomDescription, roomAdm
       {profileOpen && (
         <div className="profile-popup">
           <Avatar name={user?.username} avatarKey={user?.avatarKey} size="lg" />
-          <p className="profile-popup-username">{user?.username || "Unknown"}</p>
-          <span className="profile-popup-status">
-            <span className="profile-popup-status-dot" /> In the world
-          </span>
+          <div className="profile-popup-identity">
+            <p className="profile-popup-username">{user?.username || "Unknown"}</p>
+            <span className="profile-popup-status">
+              <span className="profile-popup-status-dot" /> In the world
+            </span>
+          </div>
         </div>
       )}
 

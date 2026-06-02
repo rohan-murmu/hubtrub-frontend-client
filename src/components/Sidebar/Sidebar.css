@@ -127,12 +127,21 @@
   color: var(--sx-text);
 }
 
+.profile-popup-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .profile-popup-username {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
   color: var(--sx-text);
   text-align: center;
+  overflow-wrap: anywhere;
   word-break: break-word;
   letter-spacing: 0.01em;
 }
@@ -401,14 +410,16 @@
     animation: sx-sheet-slide-up 0.22s var(--sx-ease);
   }
 
-  /* ── Profile popup → compact bottom-left card (near the profile button) ── */
+  /* ── Profile popup → compact bottom-left card (near the profile button) ──
+     Lifted clear ABOVE the chat input pill (which sits at ~60px+8px) so a long,
+     wrapping username never covers the "Say something…" bar. */
   .profile-popup {
     top: auto;
     left: 12px;
     right: auto;
-    bottom: calc(60px + env(safe-area-inset-bottom) + 10px);
+    bottom: calc(60px + env(safe-area-inset-bottom) + 64px);
     width: auto;
-    max-width: 240px;
+    max-width: min(72vw, 260px);
     flex-direction: row;
     align-items: center;
     gap: 11px;
@@ -420,11 +431,22 @@
   .profile-popup .sx-avatar {
     width: 40px !important;
     height: 40px !important;
+    flex: 0 0 auto;
+  }
+
+  /* Stack username over status to the right of the avatar; the column shrinks so
+     the username wraps inside it instead of widening the card over the UI. */
+  .profile-popup-identity {
+    flex: 1;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 2px;
   }
 
   .profile-popup-username {
     text-align: left;
     font-size: 0.9rem;
+    line-height: 1.2;
   }
 
   .profile-popup-status {

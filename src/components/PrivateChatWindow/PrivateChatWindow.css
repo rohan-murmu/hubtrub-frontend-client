@@ -137,6 +137,38 @@
   font-style: italic;
 }
 
+/* "Load previous chats" — pinned at the top of the message list; pulls one
+   older page per click. Sits flush so it scrolls with the history above it. */
+.pcw-load-older {
+  align-self: center;
+  flex: 0 0 auto;
+  margin-bottom: 4px;
+  padding: 5px 14px;
+  border: 1px solid var(--sx-border);
+  border-radius: 999px;
+  background: var(--sx-bg-raised);
+  color: var(--sx-text-muted);
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--sx-dur) var(--sx-ease);
+}
+
+.pcw-load-older:hover:not(:disabled) {
+  background: var(--sx-bg-hover);
+  color: var(--sx-text);
+  border-color: var(--sx-border-strong);
+}
+
+.pcw-load-older:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .pcw-bubble {
   max-width: 80%;
   padding: 8px 13px;

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import type { PrivateChat } from "@/context/ChatContext";
 import { useChat } from "@/context/ChatContext";
 import { useCurrentUser } from "@/context/UserContext";
@@ -12,27 +12,48 @@ interface PrivateChatWindowProps {
 }
 
 export default function PrivateChatWindow({ chat, index }: PrivateChatWindowProps) {
-  const { sendPrivateMessage, closeChatWindow, onlineUserIds, loadPrivateHistory } = useChat();
+  const { sendPrivateMessage, closeChatWindow, onlineUserIds, loadOlderMessages } = useChat();
   const currentUser = useCurrentUser();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Lazy-load DB-stored history the first time this window mounts for a chat.
-  // ChatContext stamps historyLoaded=true after a successful fetch so reopening
-  // the window doesn't re-pull.
-  useEffect(() => {
-    if (!chat.historyLoaded) {
-      loadPrivateHistory(chat.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.id]);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  // When set, the next messages render is a history prepend — restore the
+  // scroll position instead of jumping to the bottom. Captured just before the
+  // fetch so we can offset scrollTop by the height the new page added.
+  const pendingRestoreRef = useRef<{ prevHeight: number; prevTop: number } | null>(null);
+  const prevLenRef = useRef(0);
 
   const currentUserId = currentUser?.userId ?? null;
   const isOnline = onlineUserIds.includes(chat.participantId);
+  // No history is loaded on open; show the button until we learn there's
+  // nothing older left (hasMoreHistory === false).
+  const canLoadMore = chat.hasMoreHistory !== false;
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Keep the viewport sensible as messages change: after a history prepend
+  // (list grew while a restore was pending) hold the user's position; for new
+  // or sent messages stick to the bottom. A pending restore that didn't grow
+  // the list (empty page / error) is just cleared without moving.
+  useLayoutEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const restore = pendingRestoreRef.current;
+    pendingRestoreRef.current = null;
+    if (restore && chat.messages.length > prevLenRef.current) {
+      el.scrollTop = el.scrollHeight - restore.prevHeight + restore.prevTop;
+    } else if (!restore) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevLenRef.current = chat.messages.length;
   }, [chat.messages]);
+
+  const handleLoadOlder = () => {
+    const el = messagesContainerRef.current;
+    pendingRestoreRef.current = {
+      prevHeight: el?.scrollHeight ?? 0,
+      prevTop: el?.scrollTop ?? 0,
+    };
+    loadOlderMessages(chat.id);
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -77,8 +98,26 @@ export default function PrivateChatWindow({ chat, index }: PrivateChatWindowProp
       </div>
 
       {/* Messages */}
-      <div className="pcw-messages">
-        {chat.messages.length === 0 ? (
+      <div className="pcw-messages" ref={messagesContainerRef}>
+        {/* Previous messages are pulled a page at a time — nothing loads on
+            open. The button stays at the top so scrolling up reveals it again
+            to fetch the next older page. */}
+        {canLoadMore && (
+          <button
+            className="pcw-load-older"
+            onClick={handleLoadOlder}
+            disabled={chat.historyLoading}
+          >
+            {chat.historyLoading ? (
+              <>
+                <i className="pi pi-spin pi-spinner" /> Loading…
+              </>
+            ) : (
+              "Load previous chats"
+            )}
+          </button>
+        )}
+        {chat.messages.length === 0 && !canLoadMore ? (
           <div className="pcw-no-messages">Say hi to {chat.participantName}!</div>
         ) : (
           chat.messages.map((msg) => (
